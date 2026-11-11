@@ -13,7 +13,7 @@
  */
 
 // Mantener en sincronía con manifest.json (y con el catálogo raíz).
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.0.1';
 const APP_ID = 'kimos-vcard';
 
 /*
@@ -2344,7 +2344,7 @@ var qrcode = function() {
     email: 'bvaldes@figit.ai',
     website: 'https://figit.ai',
     linkedin: 'https://www.linkedin.com/in/bryan-vald%C3%A9s-chacana/',
-    instagram: 'https://www.instagram.com/figit.ai/',
+    instagram: 'https://www.instagram.com/figit.chile/',
     address: 'Av. Larraín 5862, Piso 13, La Reina, Santiago, Región Metropolitana',
     city: 'Santiago',
     region: 'Región Metropolitana',

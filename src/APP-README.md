@@ -72,4 +72,5 @@ Fuente y build: repositorio `kimos-vcard` (`node tools/build.mjs`).
 
 | Versión | Cambios |
 |---|---|
+| **1.0.1** | Instagram oficial de FIGIT: @figit.chile. |
 | **1.0.0** | Versión inicial: editor con vista previa móvil/escritorio, interfaz Hub · Tarjeta 3D · Código QR, página pública por `public.read`, verificación de URL y prueba del QR, vCard 3.0 con foto, QR en PNG HD, exportación HTML autónoma, marcas del tenant y agente. |

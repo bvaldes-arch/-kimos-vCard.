@@ -118,7 +118,7 @@ function page1Html() {
       btn(L.email,'','#0052FF','mail','Correo',P.email),
       btn(L.linkedin,'','#0A66C2','linkedin','LinkedIn','in/bryan-valdés-chacana'),
       btn(L.website,'','#4F46E5','globe','Sitio web','figit.ai'),
-      btn(L.instagram,'ig','#DB2777','instagram','Instagram','@figit.ai'),
+      btn(L.instagram,'ig','#DB2777','instagram','Instagram','@figit.chile'),
       btn(L.phone,'','#E53E3E','phone','Llamar',P.phone),
       btn(L.maps,'full','#E11D48','map-pin','Ubicación','Av. Larraín 5862, Piso 13, La Reina, Santiago')),
     h('div',{class:'foot'}, h('span',{text:'© '+new Date().getFullYear()+' FIGIT.ai'}), h('a',{href:U,text:'Abrir tarjeta digital ↗'}))));

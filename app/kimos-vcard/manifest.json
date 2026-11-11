@@ -1,7 +1,7 @@
 {
   "id": "kimos-vcard",
   "name": "KIMOS vCard",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Tarjeta de contacto virtual con código QR real: quien lo escanea abre tu tarjeta digital (Hub de canales, Tarjeta 3D y Código QR) con WhatsApp como canal principal, correo, LinkedIn, sitio web, Instagram, llamada y ubicación, y guarda tu contacto (.vcf con foto) en su agenda en un toque. La página pública la sirve el propio KIMOS (sin backend a medida) y también se exporta como HTML autónomo para tu dominio. Asume la identidad de cada empresa desde el registro de marcas de KIMOS: colores, logos y tipografía, con selector de submarcas. Controlable por el agente.",
   "icon": "📇",
   "author": "FIGIT.ai · Kimos Apps",

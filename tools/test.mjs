@@ -77,7 +77,7 @@ for (const [name, ctxOpts] of [
   const imgs = await page.$$eval('.kvc img', (els) => els.filter((e) => e.offsetParent).map((e) => [e.getAttribute('src'), e.naturalWidth]));
   ok(imgs.every(([, w]) => w > 0), `imágenes cargadas (${imgs.length}): foto y logo oficial`);
   const hrefs = await page.$$eval('.kvc-hl', (els) => els.map((e) => e.href));
-  const want = [/^https:\/\/wa\.me\/56987161097\?text=/, /^mailto:bvaldes@figit\.ai/, /^https:\/\/www\.linkedin\.com\/in\//, /^https:\/\/figit\.ai/, /^https:\/\/www\.instagram\.com\/figit\.ai/, /^tel:\+56987161097$/, /^https:\/\/www\.google\.com\/maps\//];
+  const want = [/^https:\/\/wa\.me\/56987161097\?text=/, /^mailto:bvaldes@figit\.ai/, /^https:\/\/www\.linkedin\.com\/in\//, /^https:\/\/figit\.ai/, /^https:\/\/www\.instagram\.com\/figit\.chile\/$/, /^tel:\+56987161097$/, /^https:\/\/www\.google\.com\/maps\//];
   want.forEach((re, i) => ok(re.test(hrefs[i] || ''), `canal ${i + 1}: ${hrefs[i]}`));
   ok((await page.locator('.kvc-hl').first().textContent()).includes('WhatsApp'), 'WhatsApp es el primer canal');
   await decodeQrs(page, 'Hub');
