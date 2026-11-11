@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tarjeta digital</title>
+<meta name="robots" content="noindex">
+<meta name="generator" content="KIMOS vCard /*@@VERSION@@*/">
+<link rel="icon" href="logo-mark.png">
+<style>
+  html, body { margin: 0; padding: 0; background: #F8FAFC; min-height: 100%; }
+  #kvc-root { min-height: 100vh; display: flex; flex-direction: column; } #kvc-root > * { flex: 1; }
+  .kvc-wait { min-height: 100vh; display: grid; place-items: center; font: 600 14px/1.4 -apple-system, "Segoe UI", Roboto, sans-serif; color: #64748B; text-align: center; padding: 24px; }
+</style>
+</head>
+<body>
+<div id="kvc-root"><div class="kvc-wait">Cargando tarjeta…</div></div>
+<script src="kvc-core.js"></script>
+<script>
+/* Página pública de KIMOS vCard: {api}/api/apps/kimos-vcard/asset/card.html?i={instancia}
+   Lee SOLO lo publicado (/api/public/app/{i}/definition) y pinta la tarjeta. */
+(function () {
+  var root = document.getElementById('kvc-root');
+  function fail(msg) {
+    var d = document.createElement('div'); d.className = 'kvc-wait'; d.textContent = msg;
+    root.replaceChildren(d);
+  }
+  var id = new URLSearchParams(location.search).get('i') || '';
+  if (!/^[\w-]{4,128}$/.test(id)) { fail('Enlace de tarjeta incompleto.'); return; }
+  var here = location.href.split('#')[0];
+  var api = here.split('/api/apps/')[0];
+  var assetBase = here.split('?')[0].replace(/[^/]*$/, '');
+  fetch(api + '/api/public/app/' + encodeURIComponent(id) + '/definition', { cache: 'no-cache' })
+    .then(function (r) {
+      if (r.status === 403) throw new Error('Esta tarjeta no está publicada.');
+      if (!r.ok) throw new Error('Tarjeta no encontrada.');
+      return r.json();
+    })
+    .then(function (j) {
+      var prof = j && j.data && j.data.profile;
+      if (!prof || !prof.name) throw new Error('Esta tarjeta no está publicada.');
+      document.title = prof.name + (prof.title ? ' · ' + prof.title : '') + (prof.company ? ' · ' + prof.company : '');
+      KVC.injectCss();
+      // El QR de la página apunta SIEMPRE a una URL real y abrible: el dominio
+      // propio si la tarjeta declara uno, si no esta misma página.
+      KVC.mount(root, prof, { qrUrl: prof.publicUrl || here, resolve: function (n) { return assetBase + n; } });
+    })
+    .catch(function (e) { fail(e && e.message ? e.message : 'No se pudo cargar la tarjeta.'); });
+})();
+</script>
+</body>
+</html>

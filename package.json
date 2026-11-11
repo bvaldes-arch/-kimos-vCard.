@@ -1,0 +1,17 @@
+{
+  "name": "kimos-vcard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "KIMOS vCard: tarjeta de contacto virtual con QR para KIMOS Enterprise.",
+  "type": "module",
+  "scripts": {
+    "build": "node tools/build.mjs",
+    "test": "node tools/test.mjs",
+    "pdf": "node tools/make-pdf.mjs",
+    "pack": "node tools/pack.mjs app/kimos-vcard"
+  },
+  "kvc": {
+    "publicUrl": "https://bvaldes-arch.github.io/-kimos-vCard./"
+  },
+  "license": "UNLICENSED"
+}
