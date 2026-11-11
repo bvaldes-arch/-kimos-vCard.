@@ -120,8 +120,10 @@
 .kvc .kvc-verified { position: absolute; right: 6px; bottom: 4px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 12px;
   color: var(--kvc-on); background: var(--kvc-primary); border: 2px solid var(--kvc-surface); box-shadow: 0 4px 10px -2px rgba(0, 0, 0, .25); }
 .kvc .kvc-name { margin: 0; font-size: 28px; line-height: 1.15; font-weight: 800; letter-spacing: -.02em; color: var(--kvc-text); }
-.kvc .kvc-role { display: inline-flex; align-items: center; gap: 8px; margin-top: 8px; padding: 4px 12px; border-radius: 999px; font-size: 12px;
+.kvc .kvc-role { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: 8px; }
+.kvc .kvc-role .kvc-title { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; border-radius: 999px; font-size: 12.5px;
   background: var(--kvc-tint); border: 1px solid color-mix(in srgb, var(--kvc-primary) 22%, transparent); }
+.kvc .kvc-role .kvc-company { font-size: 13px; }
 .kvc .kvc-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--kvc-primary); animation: kvc-pulse 2s infinite; }
 @keyframes kvc-pulse { 50% { opacity: .45; } }
 .kvc .kvc-title { font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--kvc-primary-2); }
@@ -138,6 +140,15 @@
 @keyframes kvc-bounce { 0%, 100% { transform: translateY(-15%); animation-timing-function: cubic-bezier(.8, 0, 1, 1); } 50% { transform: none; animation-timing-function: cubic-bezier(0, 0, .2, 1); } }
 .kvc .kvc-save-chip { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: 2px 8px; border-radius: 999px; background: rgba(255, 255, 255, .2); }
 .kvc .kvc-pills { width: 100%; margin-top: 12px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.kvc .kvc-pills-2 { grid-template-columns: 1.4fr 1fr; }
+.kvc .kvc-pills-1 { grid-template-columns: 1fr; }
+.kvc .kvc-pills-2 .kvc-pill, .kvc .kvc-pills-1 .kvc-pill { flex-direction: row; justify-content: center; gap: 8px; padding: 12px 10px; font-size: 13px; }
+.kvc .kvc-pill-wa { font-weight: 700; }
+/* Logo de la marca en las esquinas (Hub: arriba-izquierda · QR: arriba-derecha) */
+.kvc .kvc-corner-logo { position: absolute; z-index: 2; top: 16px; display: block; padding: 6px 7px; border-radius: 12px; background: #FFFFFF; border: 1px solid var(--kvc-line); box-shadow: 0 4px 12px -6px rgba(0, 0, 0, .18); }
+.kvc .kvc-corner-logo img { height: 46px; width: auto; }
+.kvc .kvc-corner-tl { left: 16px; }
+.kvc .kvc-corner-tr { right: 16px; }
 .kvc .kvc-pill { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 6px; border-radius: 12px; font-size: 11px; font-weight: 600;
   background: var(--kvc-pill); border: 1px solid var(--kvc-line); color: var(--kvc-text-2); transition: background .2s, transform .15s; }
 .kvc .kvc-pill .kvc-i { font-size: 15px; color: var(--kvc-primary); transition: transform .2s; }
@@ -207,16 +218,19 @@
 .kvc .kvc-face { position: absolute; inset: 0; border-radius: 24px; overflow: hidden; -webkit-backface-visibility: hidden; backface-visibility: hidden;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, .3); }
 .kvc .kvc-front { display: flex; background: #FFFFFF; border: 1px solid #E2E8F0; color: #1E293B; }
-.kvc .kvc-front-side { width: 36%; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 18px 12px;
+.kvc .kvc-front-side { width: 36%; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: space-around; padding: 18px 12px;
   background: var(--kvc-soft); border-right: 1px solid color-mix(in srgb, var(--kvc-soft) 80%, var(--kvc-primary)); }
 .kvc .kvc-front-avatar { width: 88px; height: 88px; border-radius: 50%; padding: 3px; background: linear-gradient(135deg, var(--kvc-primary), var(--kvc-accent)); box-shadow: 0 4px 10px -3px rgba(0, 0, 0, .25); }
 .kvc .kvc-front-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; object-position: 50% 25%; background: #FFFFFF; }
-.kvc .kvc-front-logo { background: #FFFFFF; padding: 4px 6px; border-radius: 9px; box-shadow: 0 1px 3px rgba(0, 0, 0, .08); }
-.kvc .kvc-front-logo img { height: 42px; width: auto; }
+.kvc .kvc-front-logo { position: absolute; top: 14px; right: 14px; background: #FFFFFF; padding: 4px 5px; border-radius: 9px; box-shadow: 0 1px 4px rgba(0, 0, 0, .1); border: 1px solid #EEF2F7; }
+.kvc .kvc-front-logo img { height: 46px; width: auto; }
 .kvc .kvc-front-qr { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.kvc .kvc-front-qrbox { width: 76px; height: 76px; padding: 4px; border-radius: 11px; background: #FFFFFF; border: 1px solid color-mix(in srgb, var(--kvc-primary) 25%, #FFFFFF); }
+.kvc .kvc-front-qrbox { width: 112px; height: 112px; padding: 5px; border-radius: 12px; background: #FFFFFF; border: 1px solid color-mix(in srgb, var(--kvc-primary) 25%, #FFFFFF); }
 .kvc .kvc-front-qr > span { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--kvc-primary); font-family: "Space Grotesk", "Plus Jakarta Sans", Inter, -apple-system, "Segoe UI", Roboto, sans-serif; }
-.kvc .kvc-front-main { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 20px 20px 14px; }
+.kvc .kvc-front-main { position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 20px 20px 14px; }
+.kvc .kvc-front-head { padding-right: 52px; }
+.kvc .kvc-fr.kvc-c-whatsapp { --kvc-c: var(--kvc-wa); }
+.kvc .kvc-fr.kvc-c-whatsapp .kvc-fr-t { font-weight: 700; color: #0F7A55; }
 .kvc .kvc-front-name { margin: 0; font-size: 21px; font-weight: 900; letter-spacing: -.02em; color: var(--kvc-ink); line-height: 1.15; }
 .kvc .kvc-front-title { margin: 3px 0 0; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--kvc-primary); }
 .kvc .kvc-front-co { margin: 0; font-size: 12px; font-weight: 500; color: #64748B; }
@@ -328,7 +342,9 @@
   .kvc .kvc-scene { height: 350px; }
   .kvc .kvc-front-side { width: 33.3%; padding: 20px; }
   .kvc .kvc-front-avatar { width: 96px; height: 96px; }
-  .kvc .kvc-front-qrbox { width: 82px; height: 82px; }
+  .kvc .kvc-front-qrbox { width: 128px; height: 128px; }
+  .kvc .kvc-front-logo img { height: 56px; }
+  .kvc .kvc-front-head { padding-right: 64px; }
   .kvc .kvc-front-main { padding: 26px 28px 16px; }
   .kvc .kvc-front-name { font-size: 25px; }
   .kvc .kvc-front-title { font-size: 14px; }
@@ -340,7 +356,11 @@
   .kvc .kvc-front-side { padding: 12px 8px; }
   .kvc .kvc-front-avatar { width: 68px; height: 68px; }
   .kvc .kvc-front-logo img { height: 32px; }
-  .kvc .kvc-front-qrbox { width: 64px; height: 64px; }
+  .kvc .kvc-front-qrbox { width: 92px; height: 92px; }
+  .kvc .kvc-front-logo { top: 10px; right: 10px; padding: 3px; }
+  .kvc .kvc-front-logo img { height: 36px; }
+  .kvc .kvc-front-head { padding-right: 40px; }
+  .kvc .kvc-corner-logo img { height: 36px; }
   .kvc .kvc-front-main { padding: 14px 12px 10px; }
   .kvc .kvc-front-name { font-size: 17px; }
   .kvc .kvc-front-title, .kvc .kvc-front-co { font-size: 10px; }
@@ -367,3 +387,13 @@
 .kvc .kvc-save > span:first-of-type { white-space: nowrap; }
 .kvc .kvc-save-chip { white-space: nowrap; }
 @container (max-width: 430px) { .kvc .kvc-save-chip { display: none; } .kvc .kvc-save { font-size: 14.5px; } }
+.kvc .kvc-dests { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.kvc .kvc-dest { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 700;
+  color: var(--kvc-text-2); background: var(--kvc-tile); border: 1px solid var(--kvc-line); transition: all .15s; }
+.kvc .kvc-dest .kvc-i { font-size: 14px; color: var(--kvc-c); }
+.kvc .kvc-dest:hover { border-color: var(--kvc-c); }
+.kvc .kvc-dest.kvc-on { color: var(--kvc-on); background: var(--kvc-c); border-color: var(--kvc-c); }
+.kvc .kvc-dest.kvc-on .kvc-i { color: var(--kvc-on); }
+.kvc .kvc-field small.kvc-dest-hint { color: var(--kvc-primary); font-weight: 600; }
+.kvc.kvc-dark .kvc-field small.kvc-dest-hint { color: var(--kvc-accent); }
+.kvc .kvc-panel-qr { padding-top: 34px; }

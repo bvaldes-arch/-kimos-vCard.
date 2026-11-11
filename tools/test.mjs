@@ -34,7 +34,7 @@ const base = `http://127.0.0.1:${server.address().port}/`;
 let fails = 0;
 const ok = (c, m) => { console.log((c ? '  ✔ ' : '  ✖ ') + m); if (!c) fails++; };
 
-async function decodeQrs(page, label) {
+async function decodeQrs(page, label, expected = EXPECTED) {
   const results = await page.evaluate(async (src) => {
     // eslint-disable-next-line no-new-func
     const jsQR = new Function(src + '; return jsQR;')();
@@ -55,7 +55,7 @@ async function decodeQrs(page, label) {
     return out;
   }, jsqrSrc);
   ok(results.length > 0, `${label}: ${results.length} QR visibles`);
-  results.forEach((r, i) => ok(r === EXPECTED, `${label}: QR #${i + 1} decodifica → ${r}`));
+  results.forEach((r, i) => ok(r === expected, `${label}: QR #${i + 1} decodifica → ${r}`));
 }
 
 const browser = await chromium.launch();
@@ -80,6 +80,10 @@ for (const [name, ctxOpts] of [
   const want = [/^https:\/\/wa\.me\/56987161097\?text=/, /^mailto:bvaldes@figit\.ai/, /^https:\/\/www\.linkedin\.com\/in\//, /^https:\/\/figit\.ai/, /^https:\/\/www\.instagram\.com\/figit\.chile\/$/, /^tel:\+56987161097$/, /^https:\/\/www\.google\.com\/maps\//];
   want.forEach((re, i) => ok(re.test(hrefs[i] || ''), `canal ${i + 1}: ${hrefs[i]}`));
   ok((await page.locator('.kvc-hl').first().textContent()).includes('WhatsApp'), 'WhatsApp es el primer canal');
+  ok(await page.locator('.kvc-pill-wa').isVisible(), 'acceso rápido de WhatsApp en el Hub');
+  ok((await page.locator('.kvc-hub a[href^="mailto:"]').count()) === 1, 'el correo aparece una sola vez en el Hub');
+  ok(await page.locator('.kvc-hub .kvc-corner-logo img').isVisible(), 'logo de la marca arriba a la izquierda del Hub');
+  ok(/CEO · Fundador/i.test(await page.locator('.kvc-hub .kvc-title').textContent()) && (await page.locator('.kvc-hub .kvc-company').textContent()) === 'FIGIT.ai', 'cargo bajo el nombre y empresa debajo');
   await decodeQrs(page, 'Hub');
   if (SHOTS) await page.screenshot({ path: path.join(SHOTS, `${name}-1-hub.png`), fullPage: true });
 
@@ -92,6 +96,8 @@ for (const [name, ctxOpts] of [
   await page.click('.kvc-tab[data-v="card"]');
   await page.waitForTimeout(500);
   await decodeQrs(page, 'Tarjeta 3D');
+  ok(/^https:\/\/wa\.me\/56987161097/.test(await page.locator('.kvc-front .kvc-fr.kvc-c-whatsapp').getAttribute('href')), 'la Tarjeta 3D tiene enlace a WhatsApp');
+  ok(await page.locator('.kvc-front-main .kvc-front-logo img').isVisible(), 'logo arriba a la derecha de la Tarjeta 3D');
   if (SHOTS) await page.screenshot({ path: path.join(SHOTS, `${name}-2-tarjeta.png`) });
   await page.click('.kvc-scene', { position: { x: 30, y: 30 } });
   await page.waitForTimeout(900);
@@ -100,6 +106,16 @@ for (const [name, ctxOpts] of [
   await page.click('.kvc-tab[data-v="qr"]');
   await page.waitForTimeout(400);
   await decodeQrs(page, 'Código QR');
+  ok(await page.locator('.kvc-panel-qr .kvc-corner-logo img').isVisible(), 'logo arriba a la derecha en Código QR');
+  for (const [k, re] of [['whatsapp', /^https:\/\/wa\.me\/56987161097/], ['website', /^https:\/\/figit\.ai/], ['instagram', /^https:\/\/www\.instagram\.com\/figit\.chile\/$/], ['linkedin', /^https:\/\/www\.linkedin\.com\/in\//]]) {
+    await page.click(`.kvc-dest[data-k="${k}"]`);
+    const url = await page.inputValue('.kvc-qrview .kvc-input');
+    ok(re.test(url), `destino ${k} → ${url.slice(0, 60)}`);
+    await decodeQrs(page, `QR → ${k}`, url);
+  }
+  if (SHOTS) await page.click('.kvc-dest[data-k="whatsapp"]');
+  if (SHOTS) await page.screenshot({ path: path.join(SHOTS, `${name}-5-qr-whatsapp.png`), fullPage: true });
+  await page.click('.kvc-dest[data-k="card"]');
   // El PNG HD (con el isotipo al centro) también debe leerse.
   const [pngDl] = await Promise.all([page.waitForEvent('download'), page.click('.kvc-qr-actions .kvc-btn-s-primary')]);
   const pngData = 'data:image/png;base64,' + fs.readFileSync(await pngDl.path()).toString('base64');

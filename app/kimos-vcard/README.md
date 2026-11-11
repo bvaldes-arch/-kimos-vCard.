@@ -1,6 +1,6 @@
 # KIMOS vCard (`kimos-vcard`)
 
-Versión actual: **1.0.1**
+Versión actual: **1.1.0**
 
 Tarjeta de contacto virtual con **código QR real**. Quien escanea abre la
 tarjeta digital —Hub de canales, Tarjeta 3D y Código QR— con **WhatsApp como
@@ -72,5 +72,6 @@ Fuente y build: repositorio `kimos-vcard` (`node tools/build.mjs`).
 
 | Versión | Cambios |
 |---|---|
+| **1.1.0** | WhatsApp siempre presente: acceso rápido en el Hub, fila en la Tarjeta 3D y destino del QR (si falta, se toma del teléfono). Correo solo una vez en el Hub. Destino del QR elegible entre tarjeta digital, WhatsApp, sitio web, Instagram y LinkedIn. Logo de la marca en la esquina superior izquierda del Hub, superior derecha de la Tarjeta 3D (con QR más grande) y superior derecha de Código QR. Cargo bajo el nombre y empresa debajo. Botón «Restaurar» de la tarjeta FIGIT; la instancia del dueño ya no se reemplaza con el perfil de KIMOS ni se re-marca. El HTML exportado lleva el QR del enlace público. |
 | **1.0.1** | Instagram oficial de FIGIT: @figit.chile. |
 | **1.0.0** | Versión inicial: editor con vista previa móvil/escritorio, interfaz Hub · Tarjeta 3D · Código QR, página pública por `public.read`, verificación de URL y prueba del QR, vCard 3.0 con foto, QR en PNG HD, exportación HTML autónoma, marcas del tenant y agente. |

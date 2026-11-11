@@ -31,7 +31,7 @@ var KVC = (function () {
     name: 'Bryan Valdes Ch.',
     firstName: 'Bryan',
     lastName: 'Valdes Chacana',
-    title: 'CEO & Fundador',
+    title: 'CEO · Fundador',
     company: 'FIGIT.ai',
     tagline: 'Transformando el futuro con Inteligencia Artificial y ecosistemas digitales.',
     phone: '+56 9 8716 1097',
@@ -79,6 +79,8 @@ var KVC = (function () {
       out[k] = p[k] === undefined ? DEFAULT_PROFILE[k] : str(p[k], max);
     });
     out.whatsapp = out.whatsapp.replace(/\D/g, '');
+    // Sin WhatsApp propio, el del teléfono: WhatsApp es el canal principal.
+    if (!out.whatsapp && out.phone) out.whatsapp = out.phone.replace(/\D/g, '');
     out.font = out.font.replace(/[^\w \-]/g, '').slice(0, 60);
     var t = p.theme || {};
     out.theme = {};
@@ -534,14 +536,20 @@ var KVC = (function () {
           h('small', { text: c.sub })),
         h('span', { class: 'kvc-hl-go' }, icon('chevron-right'))]);
     });
+    // Accesos rápidos: WhatsApp (principal) y llamada. El correo vive SOLO en
+    // «Canales Oficiales», para no duplicarlo.
     var pills = [];
-    if (L.phone) pills.push(a(L.phone, 'kvc-pill kvc-c-phone', null, [icon('phone'), h('span', { text: 'Llamar' })]));
     if (L.whatsapp) pills.push(a(L.whatsapp, 'kvc-pill kvc-pill-wa kvc-c-whatsapp', null, [icon('whatsapp'), h('span', { text: 'WhatsApp' })]));
-    if (L.email) pills.push(a(L.email, 'kvc-pill kvc-c-email', null, [icon('mail'), h('span', { text: 'Email' })]));
+    if (L.phone) pills.push(a(L.phone, 'kvc-pill kvc-c-phone', null, [icon('phone'), h('span', { text: 'Llamar' })]));
+    function cornerLogo(cls) {
+      return p.logo ? h('a', { class: 'kvc-corner-logo ' + cls, href: L.website || null, target: L.website ? '_blank' : null, rel: 'noopener noreferrer', title: p.company },
+        h('img', { src: R(p.logo), alt: p.company })) : null;
+    }
 
     var hub = h('section', { class: 'kvc-view kvc-hub', 'data-view': 'hub' },
       h('div', { class: 'kvc-panel' },
         h('div', { class: 'kvc-panel-bar' }),
+        cornerLogo('kvc-corner-tl'),
         h('div', { class: 'kvc-profile' },
           h('div', { class: 'kvc-avatar' },
             h('div', { class: 'kvc-avatar-ring' },
@@ -550,14 +558,12 @@ var KVC = (function () {
             h('span', { class: 'kvc-verified', title: 'Perfil verificado' }, icon('check'))),
           h('h1', { class: 'kvc-name', text: p.name }),
           h('div', { class: 'kvc-role' },
-            h('span', { class: 'kvc-dot' }),
-            h('span', { class: 'kvc-title', text: p.title }),
-            p.company ? h('span', { class: 'kvc-sep', text: '|' }) : null,
+            h('span', { class: 'kvc-title' }, h('span', { class: 'kvc-dot' }), p.title),
             p.company ? h('span', { class: 'kvc-company', text: p.company }) : null),
           p.tagline ? h('p', { class: 'kvc-tagline', text: p.tagline }) : null,
           h('button', { type: 'button', class: 'kvc-save', on: { click: onSave } },
             icon('user-plus', 'kvc-bounce'), h('span', { text: 'Guardar Contacto en el Teléfono' }), h('span', { class: 'kvc-save-chip', text: 'vCard .VCF' })),
-          pills.length ? h('div', { class: 'kvc-pills' }, pills) : null),
+          pills.length ? h('div', { class: 'kvc-pills kvc-pills-' + pills.length }, pills) : null),
         h('div', { class: 'kvc-divider' }, h('span', { text: 'Canales Oficiales' })),
         h('div', { class: 'kvc-hlist' }, hubList),
         h('div', { class: 'kvc-mini' },
@@ -571,8 +577,10 @@ var KVC = (function () {
           h('small', { text: 'Ecosistema de Tarjetas Digitales Inteligentes' }))));
 
     /* ── Vista 2: Tarjeta 3D ── */
+    var waDigits = p.whatsapp, telDigits = (p.phone || '').replace(/\D/g, '');
     var rowsDef = [
-      L.phone && ['phone', 'phone', p.phone, L.phone],
+      L.whatsapp && ['whatsapp', 'whatsapp', (p.phone && telDigits === waDigits ? p.phone : '+' + waDigits) + ' · WhatsApp', L.whatsapp],
+      L.phone && telDigits !== waDigits && ['phone', 'phone', p.phone, L.phone],
       L.email && ['email', 'mail', p.email, L.email],
       L.website && ['website', 'globe', prettyUrl(p.website), L.website],
       L.maps && ['maps', 'map-pin', p.address, L.maps],
@@ -583,12 +591,12 @@ var KVC = (function () {
       h('div', { class: 'kvc-face kvc-front' },
         h('div', { class: 'kvc-front-side' },
           h('div', { class: 'kvc-front-avatar' }, p.photo ? h('img', { src: R(p.photo), alt: p.name }) : null),
-          p.logo ? h('div', { class: 'kvc-front-logo' }, h('img', { src: R(p.logo), alt: p.company })) : null,
           h('div', { class: 'kvc-front-qr' }, qrSlot('kvc-front-qrbox', false), h('span', { text: 'Escanear contacto' }))),
         h('div', { class: 'kvc-front-main' },
-          h('div', null,
+          p.logo ? h('div', { class: 'kvc-front-logo' }, h('img', { src: R(p.logo), alt: p.company })) : null,
+          h('div', { class: 'kvc-front-head' },
             h('h2', { class: 'kvc-front-name', text: p.name }),
-            h('p', { class: 'kvc-front-title', text: p.title.replace(/\s*&\s*/g, ' - ') }),
+            h('p', { class: 'kvc-front-title', text: p.title }),
             h('p', { class: 'kvc-front-co', text: p.company }),
             h('div', { class: 'kvc-front-rule' })),
           h('div', { class: 'kvc-front-rows' }, rowsDef.map(function (r) {
@@ -623,22 +631,50 @@ var KVC = (function () {
     /* ── Vista 3: Código QR ── */
     var urlInput = h('input', { class: 'kvc-input kvc-mono', value: qrUrl, 'aria-label': 'Enlace de destino del QR', spellcheck: 'false' });
     var urlMsg = h('small', { class: 'kvc-field-err' });
+    // Destinos sugeridos: todos son enlaces https reales que abren el canal
+    // directamente al escanear. La tarjeta digital es el destino por defecto.
+    var dests = [{ key: 'card', icon: 'contact', label: 'Tarjeta digital', url: baseQr }];
+    if (L.whatsapp) dests.push({ key: 'whatsapp', icon: 'whatsapp', label: 'WhatsApp', url: L.whatsapp });
+    if (L.website) dests.push({ key: 'website', icon: 'globe', label: 'Sitio web', url: L.website });
+    if (L.instagram) dests.push({ key: 'instagram', icon: 'instagram', label: 'Instagram', url: L.instagram });
+    if (L.linkedin) dests.push({ key: 'linkedin', icon: 'linkedin', label: 'LinkedIn', url: L.linkedin });
+    var destBtns = [];
+    var destHint = h('small', { class: 'kvc-dest-hint' });
+    function markDest() {
+      var cur = dests.filter(function (d) { return d.url === qrUrl; })[0];
+      destBtns.forEach(function (b) { b.classList.toggle('kvc-on', !!cur && b.getAttribute('data-k') === cur.key); });
+      destHint.textContent = !cur ? 'Destino personalizado.'
+        : cur.key === 'card' ? 'Al escanear se abre tu tarjeta digital con todos tus canales.'
+        : 'Al escanear se abre directamente ' + cur.label + '.';
+    }
+    function setDest(u) { qrUrl = u; urlInput.value = u; urlMsg.textContent = ''; paintQr(); markDest(); }
+    var destRow = h('div', { class: 'kvc-dests', role: 'group', 'aria-label': 'Destino del QR' }, dests.map(function (d) {
+      var b = h('button', { type: 'button', class: 'kvc-dest kvc-c-' + (d.key === 'card' ? 'qr' : d.key), 'data-k': d.key, on: { click: function () { setDest(d.url); } } },
+        icon(d.icon), h('span', { text: d.label }));
+      destBtns.push(b);
+      return b;
+    }));
     urlInput.addEventListener('input', function () {
       var v = urlInput.value.trim();
       var c = checkQrUrl(v || baseQr);
       urlMsg.textContent = c.ok ? (c.warn || '') : c.reason + ' El QR sigue apuntando a ' + qrUrl;
       if (c.ok) { qrUrl = v || baseQr; paintQr(); }
+      markDest();
     });
+    markDest();
     var qrView = h('section', { class: 'kvc-view kvc-qrview', 'data-view': 'qr' },
       h('div', { class: 'kvc-panel kvc-panel-qr' },
+        cornerLogo('kvc-corner-tr'),
         h('span', { class: 'kvc-kicker' }, icon('qr-code'), h('span', { text: 'Generador Dinámico ' + (p.company.replace(/\.ai$/i, '').toUpperCase() || 'KIMOS') })),
         h('h2', { class: 'kvc-qr-title', text: 'Código QR Oficial' }),
         h('p', { class: 'kvc-qr-sub', text: 'Apunta la cámara de cualquier teléfono para abrir instantáneamente la tarjeta virtual y canales de contacto.' }),
         h('div', { class: 'kvc-qr-frame' }, h('div', { class: 'kvc-qr-white' }, qrSlot('kvc-qr-big', true))),
         h('div', { class: 'kvc-field' },
           h('label', null, h('span', { text: 'Enlace de Destino del QR:' }), h('em', { text: '100% Dinámico' })),
+          destRow,
           h('div', { class: 'kvc-field-row' }, urlInput,
-            h('button', { type: 'button', class: 'kvc-reset', title: 'Restablecer enlace original', on: { click: function () { urlInput.value = baseQr; qrUrl = baseQr; paintQr(); } } }, 'Actual')),
+            h('button', { type: 'button', class: 'kvc-reset', title: 'Volver a la tarjeta digital', on: { click: function () { setDest(baseQr); } } }, 'Actual')),
+          destHint,
           urlMsg,
           h('small', { text: 'Puedes personalizar el enlace a tu propio dominio si lo requieres. Solo se aceptan direcciones https:// públicas.' })),
         h('div', { class: 'kvc-qr-actions' },

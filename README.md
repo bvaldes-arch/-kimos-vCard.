@@ -14,7 +14,7 @@ empresa, la app asume su identidad desde el registro de marcas de KIMOS
 
 | Archivo | Qué es |
 |---|---|
-| [`kimos-vcard-1.0.1.kapp`](kimos-vcard-1.0.1.kapp) | La app para KIMOS: Tienda → *Instalar desde archivo* (superadmin). |
+| [`kimos-vcard-1.1.0.kapp`](kimos-vcard-1.1.0.kapp) | La app para KIMOS: Tienda → *Instalar desde archivo* (superadmin). |
 | [`docs/index.html`](docs/index.html) | La tarjeta pública autónoma (lo que se abre al escanear). Publicada con GitHub Pages. |
 | [`docs/Bryan_Valdes_FIGIT_Tarjeta_Digital.pdf`](docs/Bryan_Valdes_FIGIT_Tarjeta_Digital.pdf) | PDF interactivo: QR protagonista + botones con enlace (WhatsApp, contacto, correo, LinkedIn, web, Instagram, llamar, ubicación) y la tarjeta ejecutiva. |
 | [`docs/contacto.vcf`](docs/contacto.vcf) | Contacto con foto, enlazado desde el PDF («Guardar contacto»). |

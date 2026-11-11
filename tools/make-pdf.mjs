@@ -50,6 +50,7 @@ body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 .p1 .av img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; object-position: 50% 25%; border: 2px solid #fff; display: block; }
 .p1 h1 { margin: 0; font-size: 27px; line-height: 1.1; font-weight: 800; letter-spacing: -.02em; color: #0D366B; }
 .p1 .role { margin-top: 5px; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: #0052FF; }
+.p1 .co { margin-top: 2px; font-size: 13px; font-weight: 600; color: #475569; }
 .p1 .role span { color: #475569; font-weight: 600; text-transform: none; letter-spacing: 0; }
 .p1 .qrcard { margin-top: 20px; padding: 18px 18px 14px; border-radius: 26px; background: #fff; border: 1px solid #DBEAFE; box-shadow: 0 24px 50px -24px rgba(0, 40, 140, .35); text-align: center; }
 .p1 .k { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #0043D9; }
@@ -107,7 +108,7 @@ function page1Html() {
     contour('bgc'), contour('bgd'),
     h('div',{class:'top'}, h('a',{class:'lock',href:L.website}, h('img',{class:'m',src:P.logoMark,alt:''}), h('img',{class:'w',src:P.logoWord,alt:'FIGIT.ai'})), h('span',{class:'badge',text:'Tarjeta digital oficial'})),
     h('div',{class:'who'}, h('div',{class:'av'}, h('img',{src:P.photo,alt:P.name})),
-      h('div',null, h('h1',{text:P.name}), h('div',{class:'role'}, P.title.toUpperCase()+'  ', h('span',{text:'· '+P.company})))),
+      h('div',null, h('h1',{text:P.name}), h('div',{class:'role',text:P.title.toUpperCase()}), h('div',{class:'co',text:P.company}))),
     h('div',{class:'qrcard'},
       h('div',{class:'k'}, I('qr-code'), 'Escanea mi tarjeta'),
       h('div',null, h('div',{class:'frame'}, h('a',{href:U,id:'qr'}, qr))),

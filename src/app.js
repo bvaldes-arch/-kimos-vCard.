@@ -205,15 +205,24 @@ export default function mount(shell) {
       }
     } catch (e) { /* opcional */ }
     const email = String((me && me.email) || '').toLowerCase();
-    if (email && email !== KVC.DEFAULT_PROFILE.email) {
+    const fold = (x) => String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim();
+    const def = KVC.DEFAULT_PROFILE;
+    // ¿Es la persona del perfil de fábrica (Bryan · FIGIT.ai)? Entonces su
+    // tarjeta FIGIT se queda tal cual: ni se reemplaza por el perfil de KIMOS
+    // (cargo «Administrador…», sin teléfono) ni se re-marca con la marca del tenant.
+    const meName = fold(me && (me.displayName || me.name));
+    const isOwner = email === def.email || (meName && fold(def.name).indexOf(meName.split(' ').slice(0, 2).join(' ')) === 0);
+    if (isOwner) return;
+    if (email) {
       const name = String(me.displayName || me.name || email);
       const phone = String(me.phone || '');
       const first = name.split(' ')[0];
       updateProfile({
         name, firstName: first, lastName: name.split(' ').slice(1).join(' '),
         title: String(me.description || ''), email, phone, whatsapp: phone.replace(/\D/g, ''),
+        tagline: '', website: '', motto: '',
         whatsappMsg: 'Hola ' + first + ', te contacto desde tu tarjeta digital.',
-        photo: String(me.photoUrl || ''), tagline: '', linkedin: '', instagram: '', address: '', city: '', region: '',
+        photo: String(me.photoUrl || ''), linkedin: '', instagram: '', address: '', city: '', region: '',
         location: String(me.location || ''), cardId: '', hashtag: '', publicUrl: '',
       });
     }
@@ -337,7 +346,9 @@ export default function mount(shell) {
           try { p[k] = await blobToDataUrl(await fetch(src).then((r) => r.blob())); } catch (e) { /* se deja la URL */ }
         }
       }
-      const html = KVC.standaloneHtml(p, coreSrc, { qrUrl: p.publicUrl || '' });
+      // El QR del HTML exportado apunta al enlace público real (dominio propio
+      // o la página de KIMOS), nunca a «donde se abra el archivo».
+      const html = KVC.standaloneHtml(p, coreSrc, { qrUrl: qrTarget() });
       KVC.download(KVC.slug(p.name) + '_tarjeta.html', new Blob([html], { type: 'text/html;charset=utf-8' }));
       shell.notify({ level: 'success', text: 'HTML exportado: súbelo como index.html a tu dominio.' });
     } catch (e) {
@@ -493,6 +504,7 @@ export default function mount(shell) {
             : 'Publícala para que el QR abra tu tarjeta en cualquier teléfono.')),
         h('button', { type: 'button', className: 'kvcx-btn ' + (m.published ? 'kvcx-btn-ghost' : 'kvcx-btn-primary'), disabled: !instanceId, onClick: () => publish(!m.published) },
           m.published ? 'Despublicar' : 'Publicar ahora')),
+      !m.profile.whatsapp ? h('p', { className: 'kvcx-warn' }, 'Tu tarjeta no tiene WhatsApp: agrégalo en Canales para que sea el contacto principal.') : null,
       !instanceId ? h('p', { className: 'kvcx-warn' }, 'Esta ventana no tiene documento: abre la app desde 🗂️ Documentos → Nuevo para guardar y publicar.') : null,
       h('div', { className: 'kvcx-qr' },
         h('div', { className: 'kvcx-qr-img', ref: qrRef }),
@@ -552,6 +564,15 @@ export default function mount(shell) {
     const m = st.model, u = st.ui, p = m.profile;
     const pane = {
       perfil: h('div', { className: 'kvcx-pane' },
+        h('div', { className: 'kvcx-preset' },
+          h('div', null,
+            h('strong', null, 'Tarjeta de fábrica: Bryan Valdes Ch. · FIGIT.ai'),
+            h('small', null, 'Restaura foto, cargo, canales, logos y colores FIGIT. El enlace público se mantiene.')),
+          h('button', { type: 'button', className: 'kvcx-btn', onClick: () => {
+            if (typeof confirm === 'function' && !confirm('¿Reemplazar los datos actuales por la tarjeta FIGIT de fábrica?')) return;
+            commit({ profile: KVC.normalize(Object.assign({}, KVC.DEFAULT_PROFILE, { publicUrl: model.profile.publicUrl })) });
+          } }, 'Restaurar')),
+        !p.whatsapp ? h('p', { className: 'kvcx-warn' }, 'Falta tu WhatsApp (pestaña Canales): es el canal principal de la tarjeta.') : null,
         h(ImageField, { label: 'Foto de perfil', k: 'photo', kind: 'photo', profile: p }),
         h('div', { className: 'kvcx-grid' },
           h(Field, { label: 'Nombre en la tarjeta', k: 'name', profile: p, wide: true }),
@@ -562,7 +583,7 @@ export default function mount(shell) {
           h(Field, { label: 'Frase', k: 'tagline', profile: p, area: true, wide: true }))),
       canales: h('div', { className: 'kvcx-pane' },
         h('div', { className: 'kvcx-grid' },
-          h(Field, { label: 'WhatsApp (con código de país)', k: 'whatsapp', profile: p, placeholder: '56987161097', type: 'tel' }),
+          h(Field, { label: 'WhatsApp · canal principal', k: 'whatsapp', profile: p, placeholder: '56987161097', type: 'tel', help: 'Con código de país, solo dígitos. Vacío = el del teléfono.' }),
           h(Field, { label: 'Teléfono visible', k: 'phone', profile: p, placeholder: '+56 9 8716 1097', type: 'tel' }),
           h(Field, { label: 'Mensaje inicial de WhatsApp', k: 'whatsappMsg', profile: p, area: true, wide: true }),
           h(Field, { label: 'Correo', k: 'email', profile: p, type: 'email' }),

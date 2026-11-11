@@ -119,6 +119,9 @@
 .kimos-vcard .kvcx-test-ok { color: var(--vx-ok); }
 .kimos-vcard .kvcx-test-bad { color: var(--vx-err); }
 
+.kimos-vcard .kvcx-preset { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border-radius: var(--vx-radius); background: var(--vx-glass); border: 1px dashed var(--vx-border); }
+.kimos-vcard .kvcx-preset small { display: block; font-size: 11px; color: var(--vx-muted); }
+
 @media (max-width: 860px) {
   .kimos-vcard .kvcx-top { grid-template-columns: 1fr auto; }
   .kimos-vcard .kvcx-tabs { grid-column: 1 / -1; grid-row: 2; overflow-x: auto; }
