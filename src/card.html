@@ -43,7 +43,14 @@
       KVC.injectCss();
       // El QR de la página apunta SIEMPRE a una URL real y abrible: el dominio
       // propio si la tarjeta declara uno, si no esta misma página.
-      KVC.mount(root, prof, { qrUrl: prof.publicUrl || here, resolve: function (n) { return assetBase + n; } });
+      var qLang = new URLSearchParams(location.search).get('lang');
+      KVC.mount(root, prof, {
+        qrUrl: prof.publicUrl || here.replace(/([?&])lang=[^&]*&?/, '$1').replace(/[?&]$/, ''),
+        resolve: function (n) { return assetBase + n; },
+        lang: qLang === 'en' || qLang === 'es' ? qLang : undefined,
+        // «Déjame tus datos» llega a la app como prospecto (gateway public.submit).
+        leadEndpoint: j.data.leads === true ? api + '/api/public/app/' + encodeURIComponent(id) + '/submit/lead' : ''
+      });
     })
     .catch(function (e) { fail(e && e.message ? e.message : 'No se pudo cargar la tarjeta.'); });
 })();

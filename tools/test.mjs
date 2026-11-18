@@ -64,7 +64,8 @@ for (const [name, ctxOpts] of [
   ['escritorio', { viewport: { width: 1280, height: 860 }, deviceScaleFactor: SHOTS ? 2 : 1 }],
 ]) {
   console.log(`\n▶ ${name}`);
-  const ctx = await browser.newContext(Object.assign({ acceptDownloads: true }, ctxOpts));
+  const ctx = await browser.newContext(Object.assign({ acceptDownloads: true, locale: 'es-CL' }, ctxOpts));
+  await ctx.route('https://wa.me/**', (r) => r.fulfill({ status: 200, contentType: 'text/html', body: 'wa' }));
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e)));
@@ -85,6 +86,35 @@ for (const [name, ctxOpts] of [
   ok(await page.locator('.kvc-hub .kvc-corner-logo img').isVisible(), 'logo de la marca arriba a la izquierda del Hub');
   ok(/CEO · Fundador/i.test(await page.locator('.kvc-hub .kvc-title').textContent()) && (await page.locator('.kvc-hub .kvc-company').textContent()) === 'FIGIT.ai', 'cargo bajo el nombre y empresa debajo');
   await decodeQrs(page, 'Hub');
+
+  // v1.2 · «Déjame tus datos» sin gateway: valida y abre WhatsApp con los datos.
+  await page.click('.kvc-lead-send');
+  ok((await page.locator('.kvc-lead-msg').textContent()).includes('nombre'), 'formulario: exige nombre');
+  await page.fill('#kvc-lead-name', 'Ana Rojas');
+  await page.click('.kvc-lead-send');
+  ok((await page.locator('.kvc-lead-msg').textContent()).includes('correo o un teléfono'), 'formulario: exige correo o teléfono');
+  await page.fill('#kvc-lead-email', 'ana@acme');
+  await page.click('.kvc-lead-send');
+  ok((await page.locator('.kvc-lead-msg').textContent()).includes('no parece válido'), 'formulario: valida el correo');
+  await page.fill('#kvc-lead-email', 'ana@acme.cl');
+  await page.fill('#kvc-lead-company', 'Acme');
+  await page.fill('#kvc-lead-message', 'Quiero una demo');
+  const [pop] = await Promise.all([ctx.waitForEvent('page'), page.click('.kvc-lead-send')]);
+  await pop.waitForLoadState().catch(() => {});
+  const waUrl = decodeURIComponent(pop.url());
+  ok(waUrl.startsWith('https://wa.me/56987161097?text=') && waUrl.includes('soy Ana Rojas de Acme') && waUrl.includes('ana@acme.cl') && waUrl.includes('Quiero una demo'),
+    'formulario: abre WhatsApp de Bryan con los datos → ' + waUrl.slice(0, 90) + '…');
+  await pop.close();
+
+  // v1.2 · inglés
+  await page.click('.kvc-lang');
+  await page.waitForTimeout(200);
+  ok((await page.locator('.kvc-save span').first().textContent()) === 'Save Contact to Phone', 'EN: botón principal en inglés');
+  ok(/CEO · Founder/.test(await page.locator('.kvc-hub .kvc-title').textContent()), 'EN: cargo en inglés');
+  ok((await page.locator('.kvc-hl').first().getAttribute('href')).includes(encodeURIComponent("Hi Bryan")), 'EN: mensaje de WhatsApp en inglés');
+  await page.click('.kvc-lang');
+  await page.waitForTimeout(200);
+  ok((await page.locator('.kvc-save span').first().textContent()) === 'Guardar Contacto en el Teléfono', 'ES: vuelve al español');
   if (SHOTS) await page.screenshot({ path: path.join(SHOTS, `${name}-1-hub.png`), fullPage: true });
 
   // vCard
@@ -113,6 +143,21 @@ for (const [name, ctxOpts] of [
     ok(re.test(url), `destino ${k} → ${url.slice(0, 60)}`);
     await decodeQrs(page, `QR → ${k}`, url);
   }
+  // v1.2 · QR sin internet: el contacto va dentro del código.
+  await page.click('.kvc-dest[data-k="vcard"]');
+  const vc = (await page.evaluate(async (src) => {
+    const jsQR = new Function(src + '; return jsQR;')();
+    const svg = document.querySelector('.kvc-qrview .kvc-qr-slot svg');
+    const im = svg.querySelector('image');
+    if (im) { const r = await fetch(im.getAttribute('href')); const b = await r.blob(); im.setAttribute('href', await new Promise((ok) => { const f = new FileReader(); f.onload = () => ok(f.result); f.readAsDataURL(b); })); }
+    const xml = new XMLSerializer().serializeToString(svg);
+    const img = new Image(); await new Promise((r) => { img.onload = r; img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml); });
+    const c = document.createElement('canvas'); c.width = 760; c.height = 760; const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, 760, 760); g.drawImage(img, 40, 40, 680, 680);
+    const d = g.getImageData(0, 0, 760, 760); const k = jsQR(d.data, 760, 760); return k ? k.data : '';
+  }, jsqrSrc)) || '';
+  ok(vc.startsWith('BEGIN:VCARD') && vc.includes('FN:Bryan Valdes Ch.') && vc.includes('TEL;TYPE=CELL:+56987161097') && vc.includes('EMAIL:bvaldes@figit.ai'),
+    'QR sin internet (con logo) decodifica el contacto completo');
+  if (SHOTS) await page.screenshot({ path: path.join(SHOTS, `${name}-6-qr-offline.png`), fullPage: true });
   if (SHOTS) await page.click('.kvc-dest[data-k="whatsapp"]');
   if (SHOTS) await page.screenshot({ path: path.join(SHOTS, `${name}-5-qr-whatsapp.png`), fullPage: true });
   await page.click('.kvc-dest[data-k="card"]');

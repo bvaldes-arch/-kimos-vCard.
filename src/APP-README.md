@@ -45,13 +45,18 @@ defecto del tenant. Sin registro de marcas, todo se ajusta a mano.
 | `public.read` | Que la página del QR lea lo publicado, sin sesión. |
 | `files.write` | Subir foto y logos con ruta gestionada por el host (§7.e). Sin él, se embeben comprimidos. |
 | `brand.read` | Asumir colores, logos y tipografía del registro de marcas (§7.f). |
-| `agent.control` | `GET_CARD`, `UPDATE_CARD`, `SET_PUBLISHED`. |
+| `public.submit` | Recibir «Déjame tus datos» como prospectos (canal `lead`). |
+| `records.link` | «Pasar a Clientes»: crea o reutiliza el contacto en la identidad compartida. |
+| `agent.control` | `GET_CARD`, `UPDATE_CARD`, `LIST_LEADS`, `SET_PUBLISHED`. |
 
 ## Avisos del revisor que se mantienen, y por qué
 
 - *Logo/paleta propios*: la tarjeta trae la marca FIGIT.ai **de fábrica** como
   perfil por defecto (`assets/`), pero lee y aplica `shell.brands`; los colores
   de la tarjeta viven en tokens con nombre (`--kvc-*`).
+- *¿Debería otra app poder alimentarla?* No: los prospectos entran solo por
+  el formulario público de la tarjeta y salen a Clientes con `shell.records`.
+  No se publica `dataSchema` a propósito; la pasarela queda cerrada.
 - *Colores de canal*: verde WhatsApp, azul LinkedIn, degradado Instagram, etc.
   son colores de marcas de terceros y van en tokens con nombre.
 
@@ -72,6 +77,7 @@ Fuente y build: repositorio `kimos-vcard` (`node tools/build.mjs`).
 
 | Versión | Cambios |
 |---|---|
+| **1.2.0** | «Captura». Formulario «Déjame tus datos» en la tarjeta pública (gateway `public.submit`, canal `lead`, honeypot) con pestaña **Prospectos**: WhatsApp/correo al prospecto, archivar y **Pasar a Clientes** (`shell.records`, contacto sin duplicar). Fuera de KIMOS el formulario abre WhatsApp con los datos escritos. **QR sin internet**: destino «Contacto sin internet» (vCard dentro del QR) y PNG en Publicar. **Inglés**: botón ES/EN, detección del idioma del teléfono y campos en inglés. **Plantillas**: FIGIT (fábrica), en blanco y una por cada marca del registro; una tarjeta nueva de otra persona nunca recibe los datos de Bryan. Permisos nuevos: `public.submit`, `records.link`. |
 | **1.1.0** | WhatsApp siempre presente: acceso rápido en el Hub, fila en la Tarjeta 3D y destino del QR (si falta, se toma del teléfono). Correo solo una vez en el Hub. Destino del QR elegible entre tarjeta digital, WhatsApp, sitio web, Instagram y LinkedIn. Logo de la marca en la esquina superior izquierda del Hub, superior derecha de la Tarjeta 3D (con QR más grande) y superior derecha de Código QR. Cargo bajo el nombre y empresa debajo. Botón «Restaurar» de la tarjeta FIGIT; la instancia del dueño ya no se reemplaza con el perfil de KIMOS ni se re-marca. El HTML exportado lleva el QR del enlace público. |
 | **1.0.1** | Instagram oficial de FIGIT: @figit.chile. |
 | **1.0.0** | Versión inicial: editor con vista previa móvil/escritorio, interfaz Hub · Tarjeta 3D · Código QR, página pública por `public.read`, verificación de URL y prueba del QR, vCard 3.0 con foto, QR en PNG HD, exportación HTML autónoma, marcas del tenant y agente. |

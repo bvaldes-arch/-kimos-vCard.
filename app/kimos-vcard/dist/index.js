@@ -13,7 +13,7 @@
  */
 
 // Mantener en sincronía con manifest.json (y con el catálogo raíz).
-const APP_VERSION = '1.1.0';
+const APP_VERSION = '1.2.0';
 const APP_ID = 'kimos-vcard';
 
 /*
@@ -2361,12 +2361,28 @@ var qrcode = function() {
     font: '',
     brandId: '',
     brandName: '',
+    // Inglés (v1.2): si están vacíos, la tarjeta en inglés usa el texto en español.
+    titleEn: 'CEO · Founder',
+    taglineEn: 'Shaping the future with Artificial Intelligence and digital ecosystems.',
+    whatsappMsgEn: "Hi Bryan, great to connect. I'm reaching out from your FIGIT.ai digital card",
+    mottoEn: 'Strategic Artificial Intelligence, Predictive Models and High-Impact Automation.',
+    leadForm: 'on',
     theme: { primary: '#0052FF', ink: '#0D366B', soft: '#DDF0FF', accent: '#00D2FF' }
   };
 
+  /* Plantilla en blanco (v1.2): lo que recibe una tarjeta nueva de otra
+     persona u otra empresa. Nada de los datos de Bryan ni de FIGIT. */
+  var EMPTY_PROFILE = (function () {
+    var e = {};
+    Object.keys(DEFAULT_PROFILE).forEach(function (k) { e[k] = k === 'theme' ? DEFAULT_PROFILE.theme : ''; });
+    e.leadForm = 'on';
+    return e;
+  })();
+
   var FIELDS = ['name', 'firstName', 'lastName', 'title', 'company', 'tagline', 'phone', 'whatsapp',
     'whatsappMsg', 'email', 'website', 'linkedin', 'instagram', 'address', 'city', 'region', 'country',
-    'photo', 'logo', 'logoMark', 'logoWord', 'publicUrl', 'cardId', 'motto', 'location', 'hashtag', 'font', 'brandId', 'brandName'];
+    'photo', 'logo', 'logoMark', 'logoWord', 'publicUrl', 'cardId', 'motto', 'location', 'hashtag', 'font', 'brandId', 'brandName',
+    'titleEn', 'taglineEn', 'whatsappMsgEn', 'mottoEn', 'leadForm'];
 
   function str(v, max) {
     if (v === null || v === undefined) return '';
@@ -2386,12 +2402,122 @@ var qrcode = function() {
     // Sin WhatsApp propio, el del teléfono: WhatsApp es el canal principal.
     if (!out.whatsapp && out.phone) out.whatsapp = out.phone.replace(/\D/g, '');
     out.font = out.font.replace(/[^\w \-]/g, '').slice(0, 60);
+    out.leadForm = out.leadForm === 'off' ? 'off' : 'on';
     var t = p.theme || {};
     out.theme = {};
     Object.keys(DEFAULT_PROFILE.theme).forEach(function (k) {
       out.theme[k] = isHex(t[k]) ? t[k] : DEFAULT_PROFILE.theme[k];
     });
     return out;
+  }
+
+
+  /* ── Idioma (v1.2): español por defecto, inglés completo ────────────── */
+  var EN = {
+   "Actual": "Reset",
+   "Al escanear se abre directamente ": "Scanning opens ",
+   "Al escanear se abre tu tarjeta digital con todos tus canales.": "Scanning opens the digital card with every contact channel.",
+   "Apunta la cámara de cualquier teléfono para abrir instantáneamente la tarjeta virtual y canales de contacto.": "Point any phone camera here to instantly open the digital card and contact channels.",
+   "Cambiar tema": "Toggle theme",
+   "Canales Oficiales": "Official Channels",
+   "Cerrar": "Close",
+   "Chatear por WhatsApp": "Chat on WhatsApp",
+   "Compartir tarjeta": "Share card",
+   "Compartir": "Share",
+   "Contacto descargado: ábrelo para guardarlo en tu agenda.": "Contact downloaded: open it to save it to your phone.",
+   "Copiado": "Copied",
+   "Copiar Enlace": "Copy Link",
+   "Copiar": "Copy",
+   "Correo": "Email",
+   "Código QR Dinámico": "Dynamic QR Code",
+   "Código QR Oficial": "Official QR Code",
+   "Código QR": "QR Code",
+   "Datos de contacto (vCard 3.0)": "Contact details (vCard 3.0)",
+   "Descargar .vcf": "Download .vcf",
+   "Descargar Contacto (vCard)": "Download Contact (vCard)",
+   "Descargar PNG HD": "Download HD PNG",
+   "Destino del QR": "QR destination",
+   "Destino personalizado.": "Custom destination.",
+   "Ecosistema de Tarjetas Digitales Inteligentes": "Smart Digital Card Ecosystem",
+   "Enlace copiado": "Link copied",
+   "Enlace de Destino del QR:": "QR Destination Link:",
+   "Enlace de destino del QR": "QR destination link",
+   "Enlace de la tarjeta": "Card link",
+   "Enlace demasiado largo para un QR": "Link too long for a QR code",
+   "Enviar Correo Directo": "Send an Email",
+   "Envía tu tarjeta digital por el canal que prefieras.": "Send the digital card through your preferred channel.",
+   "Escanea para compartir o abrir en otro celular": "Scan to share or open on another phone",
+   "Escanear contacto": "Scan contact",
+   "Generador Dinámico ": "Dynamic Generator ",
+   "Guardar Contacto en el Teléfono": "Save Contact to Phone",
+   "Haz clic para voltear la tarjeta": "Click to flip the card",
+   "Hola, te comparto la tarjeta digital de ": "Hi, here is the digital card of ",
+   "Imprimir Tarjeta": "Print Card",
+   "Impulsado por ": "Powered by ",
+   "Instagram Oficial": "Official Instagram",
+   "Llamar por Teléfono": "Call by Phone",
+   "Llamar": "Call",
+   "No se pudo generar el PNG": "Could not create the PNG",
+   "Oficial": "Official",
+   "Perfil en LinkedIn": "LinkedIn Profile",
+   "Perfil verificado": "Verified profile",
+   "Principal": "Main",
+   "Puedes personalizar el enlace a tu propio dominio si lo requieres. Solo se aceptan direcciones https:// públicas.": "You can point it to your own domain. Only public https:// addresses are accepted.",
+   "QR descargado en alta resolución": "High-resolution QR downloaded",
+   "Sitio Web Oficial": "Official Website",
+   "Sitio web": "Website",
+   "Tarjeta 3D": "3D Card",
+   "Tarjeta de Contacto Ejecutiva": "Executive Contact Card",
+   "Tarjeta digital · ": "Digital card · ",
+   "Tarjeta digital": "Digital card",
+   "Te comparto mi tarjeta de contacto digital.": "Here is my digital contact card.",
+   "Ubicación en Google Maps": "Location on Google Maps",
+   "Ver Datos vCard": "View vCard Data",
+   "Ver QR": "View QR",
+   "Ver código QR": "View QR code",
+   "Vistas": "Views",
+   "Voltear": "Flip",
+   "Volver a la tarjeta digital": "Back to the digital card",
+   ". Todos los derechos reservados.": ". All rights reserved.",
+   " El QR sigue apuntando a ": " The QR still points to ",
+   "Correo electrónico": "Email",
+   "Ubicación": "Location",
+   "Déjame tus datos": "Leave your details",
+   "Te contacto yo. Tus datos solo llegan a ": "I will get back to you. Your details only reach ",
+   "Nombre": "Name",
+   "Empresa": "Company",
+   "WhatsApp o teléfono": "WhatsApp or phone",
+   "¿En qué te puedo ayudar?": "How can I help you?",
+   "Enviar mis datos": "Send my details",
+   "Enviar por WhatsApp": "Send via WhatsApp",
+   "Enviando…": "Sending…",
+   "Escribe tu nombre.": "Please enter your name.",
+   "Deja un correo o un teléfono para responderte.": "Leave an email or a phone number so I can reply.",
+   "Ese correo no parece válido.": "That email does not look valid.",
+   "¡Gracias! Te contactaré pronto.": "Thank you! I will contact you soon.",
+   "Tus datos llegaron. ": "Your details arrived. ",
+   "Se abrió WhatsApp con tus datos: solo falta tocar Enviar.": "WhatsApp opened with your details: just tap Send.",
+   "No se pudo enviar. Inténtalo otra vez o escríbeme por WhatsApp.": "Could not send. Try again or message me on WhatsApp.",
+   "Demasiados envíos seguidos. Espera un minuto.": "Too many submissions in a row. Please wait a minute.",
+   "Vista previa: el formulario envía en la tarjeta publicada.": "Preview: the form sends from the published card.",
+   "Enviar otro": "Send another",
+   "Contacto sin internet": "Offline contact",
+   "El contacto va dentro del QR: se guarda en la agenda sin conexión.": "The contact lives inside the QR: it saves to the phone without internet.",
+   "Idioma": "Language"
+  };
+  function tr(lang, s) { return lang === 'en' && EN[s] ? EN[s] : s; }
+  function pickLang(opts) {
+    if (opts && (opts.lang === 'es' || opts.lang === 'en')) return opts.lang;
+    try { var st = localStorage.getItem('kvc-lang'); if (st === 'es' || st === 'en') return st; } catch (e) { /* sin storage */ }
+    var nav = (typeof navigator !== 'undefined' && (navigator.language || '')) || '';
+    return /^en/i.test(nav) ? 'en' : 'es';
+  }
+  /* Perfil visto en un idioma: los campos *En reemplazan a los españoles. */
+  function localize(p, lang) {
+    if (lang !== 'en') return p;
+    var o = {}; Object.keys(p).forEach(function (k) { o[k] = p[k]; });
+    ['title', 'tagline', 'whatsappMsg', 'motto'].forEach(function (k) { if (p[k + 'En']) o[k] = p[k + 'En']; });
+    return o;
   }
 
   /* ── Enlaces de cada canal ──────────────────────────────────────────── */
@@ -2424,14 +2550,14 @@ var qrcode = function() {
     return label;
   }
 
-  function links(p) {
+  function links(p, lang) {
     var L = {};
     if (p.whatsapp) {
       L.whatsapp = 'https://wa.me/' + p.whatsapp + (p.whatsappMsg ? '?text=' + encodeURIComponent(p.whatsappMsg) : '');
     }
     var tel = (p.phone || '').replace(/[^\d+]/g, '');
     if (tel) L.phone = 'tel:' + tel;
-    if (p.email) L.email = 'mailto:' + p.email + '?subject=' + encodeURIComponent('Contacto desde tu tarjeta digital ' + (p.company || ''));
+    if (p.email) L.email = 'mailto:' + p.email + '?subject=' + encodeURIComponent((lang === 'en' ? 'Contact from your digital card ' : 'Contacto desde tu tarjeta digital ') + (p.company || ''));
     if (p.website) L.website = withProto(p.website);
     if (p.linkedin) L.linkedin = withProto(p.linkedin);
     if (p.instagram) L.instagram = igUrl(p.instagram);
@@ -2440,16 +2566,17 @@ var qrcode = function() {
   }
 
   /* Lista ordenada de canales (WhatsApp primero: es el canal principal). */
-  function channels(p) {
-    var L = links(p);
+  function channels(p, lang) {
+    var L = links(p, lang);
+    var _ = function (s) { return tr(lang, s); };
     var out = [];
     if (L.whatsapp) out.push({ key: 'whatsapp', icon: 'whatsapp', label: 'WhatsApp', sub: p.phone || ('+' + p.whatsapp), href: L.whatsapp });
-    if (L.email) out.push({ key: 'email', icon: 'mail', label: 'Correo electrónico', sub: p.email, href: L.email });
+    if (L.email) out.push({ key: 'email', icon: 'mail', label: _('Correo electrónico'), sub: p.email, href: L.email });
     if (L.linkedin) out.push({ key: 'linkedin', icon: 'linkedin', label: 'LinkedIn', sub: liLabel(p.linkedin), href: L.linkedin });
-    if (L.website) out.push({ key: 'website', icon: 'globe', label: 'Sitio web', sub: prettyUrl(p.website), href: L.website });
+    if (L.website) out.push({ key: 'website', icon: 'globe', label: _('Sitio web'), sub: prettyUrl(p.website), href: L.website });
     if (L.instagram) out.push({ key: 'instagram', icon: 'instagram', label: 'Instagram', sub: igHandle(p.instagram), href: L.instagram });
-    if (L.phone) out.push({ key: 'phone', icon: 'phone', label: 'Llamar', sub: p.phone, href: L.phone });
-    if (L.maps) out.push({ key: 'maps', icon: 'map-pin', label: 'Ubicación', sub: p.address, href: L.maps });
+    if (L.phone) out.push({ key: 'phone', icon: 'phone', label: _('Llamar'), sub: p.phone, href: L.phone });
+    if (L.maps) out.push({ key: 'maps', icon: 'map-pin', label: _('Ubicación'), sub: p.address, href: L.maps });
     return out;
   }
 
@@ -2484,6 +2611,22 @@ var qrcode = function() {
     if (photoB64) lines.push('PHOTO;ENCODING=b;TYPE=JPEG:' + photoB64);
     lines.push('END:VCARD');
     return lines.map(fold).join('\r\n') + '\r\n';
+  }
+
+  /* vCard compacto para un QR que funciona sin internet: sin foto, sin nota
+     y sin perfiles sociales, para que el código siga siendo legible. */
+  function vcardLite(p) {
+    var L = links(p);
+    var first = p.firstName || p.name.split(' ')[0] || '';
+    var last = p.lastName || p.name.split(' ').slice(1).join(' ');
+    var lines = ['BEGIN:VCARD', 'VERSION:3.0', 'N:' + esc(last) + ';' + esc(first) + ';;;', 'FN:' + esc(p.name)];
+    if (p.company) lines.push('ORG:' + esc(p.company));
+    if (p.title) lines.push('TITLE:' + esc(p.title));
+    if (p.phone) lines.push('TEL;TYPE=CELL:' + p.phone.replace(/[^\d+]/g, ''));
+    if (p.email) lines.push('EMAIL:' + p.email);
+    if (L.website) lines.push('URL:' + L.website);
+    lines.push('END:VCARD');
+    return lines.join('\n');
   }
 
   /* ── QR ─────────────────────────────────────────────────────────────── */
@@ -2701,15 +2844,37 @@ var qrcode = function() {
     website: 'Sitio Web Oficial', instagram: 'Instagram Oficial', phone: 'Llamar por Teléfono', maps: 'Ubicación en Google Maps'
   };
 
+  /*
+   * opts.lang          'es' | 'en' (si falta: el guardado, o el idioma del teléfono)
+   * opts.leadEndpoint  URL del gateway public.submit para «Déjame tus datos».
+   *                    Sin ella, el formulario abre WhatsApp con los datos escritos.
+   */
   function mount(root, profile, opts) {
+    var ctl = {};
+    var cur = null;
+    function run(o) {
+      if (cur) cur.destroy();
+      cur = mountOnce(root, profile, o, function (lang, view) {
+        run(Object.assign({}, o, { lang: lang, view: view }));
+      });
+      ctl.qrUrl = cur.qrUrl; ctl.profile = cur.profile; ctl.setView = cur.setView; ctl.lang = cur.lang;
+    }
+    run(opts || {});
+    ctl.destroy = function () { if (cur) cur.destroy(); };
+    return ctl;
+  }
+
+  function mountOnce(root, profile, opts, relaunch) {
     opts = opts || {};
-    var p = normalize(profile);
+    var lang = pickLang(opts);
+    var _ = function (s) { return tr(lang, s); };
+    var p = localize(normalize(profile), lang);
     var R = function (s) { return resolveImg(s, opts.resolve); };
     var here = typeof location !== 'undefined' ? location.href.split('#')[0] : '';
     var baseQr = [opts.qrUrl, p.publicUrl, here, links(p).website].filter(function (u) { return u && checkQrUrl(u).ok; })[0] || 'https://figit.ai';
     var qrUrl = baseQr;
-    var ch = channels(p);
-    var L = links(p);
+    var ch = channels(p, lang);
+    var L = links(p, lang);
     var dark = false;
     try { dark = opts.storage !== false && localStorage.getItem('kvc-theme') === 'dark'; } catch (e) { /* sin storage */ }
     var view = opts.view === 'card' || opts.view === 'qr' ? opts.view : 'hub';
@@ -2728,14 +2893,14 @@ var qrcode = function() {
       return h('a', o, children);
     }
     function copy(text, ok) {
-      var done = function () { toast(ok || 'Copiado'); };
+      var done = function () { toast(ok || _('Copiado')); };
       if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, function () { toast(text); });
       else toast(text);
     }
 
     /* Acciones */
     function onSave() {
-      saveVcf(p, opts.resolve).then(function () { toast('Contacto descargado: ábrelo para guardarlo en tu agenda.'); });
+      saveVcf(p, opts.resolve).then(function () { toast(_('Contacto descargado: ábrelo para guardarlo en tu agenda.')); });
     }
     function logoData() {
       var src = R(p.logoMark);
@@ -2746,11 +2911,11 @@ var qrcode = function() {
     }
     function onQrPng() {
       logoData().then(function (logo) { return qrPng(qrUrl, { dark: p.theme.ink, logo: logo, px: 1400 }); })
-        .then(function (b) { download('QR_' + slug(p.name) + '.png', b); toast('QR descargado en alta resolución'); })
-        .catch(function () { toast('No se pudo generar el PNG'); });
+        .then(function (b) { download('QR_' + slug(p.name) + '.png', b); toast(_('QR descargado en alta resolución')); })
+        .catch(function () { toast(_('No se pudo generar el PNG')); });
     }
     function onShare() {
-      var data = { title: p.name + ' · ' + p.company, text: 'Te comparto mi tarjeta de contacto digital.', url: qrUrl };
+      var data = { title: p.name + ' · ' + p.company, text: _('Te comparto mi tarjeta de contacto digital.'), url: qrUrl };
       if (navigator.share && !opts.preview) { navigator.share(data).catch(function () { }); return; }
       openModal(shareModal());
     }
@@ -2760,37 +2925,37 @@ var qrcode = function() {
     function openModal(content) {
       var close = function () { modalHost.replaceChildren(); };
       var box = h('div', { class: 'kvc-modal', role: 'dialog', 'aria-modal': 'true' },
-        h('button', { type: 'button', class: 'kvc-modal-x', 'aria-label': 'Cerrar', on: { click: close } }, '×'),
+        h('button', { type: 'button', class: 'kvc-modal-x', 'aria-label': _('Cerrar'), on: { click: close } }, '×'),
         content);
       var back = h('div', { class: 'kvc-backdrop', on: { click: function (e) { if (e.target === back) close(); } } }, box);
       modalHost.replaceChildren(back);
     }
     function shareModal() {
-      var msg = 'Hola, te comparto la tarjeta digital de ' + p.name + ' (' + p.title + ', ' + p.company + '): ' + qrUrl;
+      var msg = _('Hola, te comparto la tarjeta digital de ') + p.name + ' (' + p.title + ', ' + p.company + '): ' + qrUrl;
       var opt = function (href, icn, cls, label) {
         return a(href, 'kvc-share-opt ' + cls, null, [h('span', { class: 'kvc-share-ic' }, icon(icn)), h('span', { text: label })]);
       };
       return h('div', null,
-        h('h3', { class: 'kvc-modal-t', text: 'Compartir tarjeta' }),
-        h('p', { class: 'kvc-modal-s', text: 'Envía tu tarjeta digital por el canal que prefieras.' }),
+        h('h3', { class: 'kvc-modal-t', text: _('Compartir tarjeta') }),
+        h('p', { class: 'kvc-modal-s', text: _('Envía tu tarjeta digital por el canal que prefieras.') }),
         h('div', { class: 'kvc-share-grid' },
           opt('https://wa.me/?text=' + encodeURIComponent(msg), 'whatsapp', 'kvc-c-whatsapp', 'WhatsApp'),
           opt('https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(qrUrl), 'linkedin', 'kvc-c-linkedin', 'LinkedIn'),
-          opt('mailto:?subject=' + encodeURIComponent('Tarjeta digital · ' + p.name) + '&body=' + encodeURIComponent(msg), 'mail', 'kvc-c-email', 'Correo'),
+          opt('mailto:?subject=' + encodeURIComponent(_('Tarjeta digital · ') + p.name) + '&body=' + encodeURIComponent(msg), 'mail', 'kvc-c-email', _('Correo')),
           h('button', { type: 'button', class: 'kvc-share-opt kvc-c-qr', on: { click: function () { modalHost.replaceChildren(); setView('qr'); } } },
-            h('span', { class: 'kvc-share-ic' }, icon('qr-code')), h('span', { text: 'Código QR' }))),
+            h('span', { class: 'kvc-share-ic' }, icon('qr-code')), h('span', { text: _('Código QR') }))),
         h('div', { class: 'kvc-copy' },
-          h('input', { class: 'kvc-input', value: qrUrl, readonly: true, 'aria-label': 'Enlace de la tarjeta' }),
-          h('button', { type: 'button', class: 'kvc-btn-s', on: { click: function () { copy(qrUrl, 'Enlace copiado'); } } }, icon('copy'), h('span', { text: 'Copiar' }))));
+          h('input', { class: 'kvc-input', value: qrUrl, readonly: true, 'aria-label': _('Enlace de la tarjeta') }),
+          h('button', { type: 'button', class: 'kvc-btn-s', on: { click: function () { copy(qrUrl, _('Enlace copiado')); } } }, icon('copy'), h('span', { text: _('Copiar') }))));
     }
     function vcardModal() {
       var text = vcard(p, '');
       return h('div', null,
-        h('h3', { class: 'kvc-modal-t', text: 'Datos de contacto (vCard 3.0)' }),
+        h('h3', { class: 'kvc-modal-t', text: _('Datos de contacto (vCard 3.0)') }),
         h('pre', { class: 'kvc-pre', text: text }),
         h('div', { class: 'kvc-modal-actions' },
-          h('button', { type: 'button', class: 'kvc-btn-s kvc-btn-s-primary', on: { click: onSave } }, icon('download'), h('span', { text: 'Descargar .vcf' })),
-          h('button', { type: 'button', class: 'kvc-btn-s', on: { click: function () { copy(text, 'vCard copiada'); } } }, icon('copy'), h('span', { text: 'Copiar' }))));
+          h('button', { type: 'button', class: 'kvc-btn-s kvc-btn-s-primary', on: { click: onSave } }, icon('download'), h('span', { text: _('Descargar .vcf') })),
+          h('button', { type: 'button', class: 'kvc-btn-s', on: { click: function () { copy(text, 'vCard copiada'); } } }, icon('copy'), h('span', { text: _('Copiar') }))));
     }
 
     /* QR (se repinta si cambia el destino en el estudio) */
@@ -2803,7 +2968,7 @@ var qrcode = function() {
     function paintQr() {
       qrSlots.forEach(function (s) {
         try { s.el.replaceChildren(qrSvg(qrUrl, { dark: p.theme.ink, logo: s.logo ? R(p.logoMark) : '' })); }
-        catch (e) { s.el.textContent = 'Enlace demasiado largo para un QR'; }
+        catch (e) { s.el.textContent = _('Enlace demasiado largo para un QR'); }
       });
     }
 
@@ -2814,7 +2979,13 @@ var qrcode = function() {
         icon(icn), h('span', { class: 'kvc-tab-t', text: label }));
       return tabs[id];
     }
-    var themeBtn = h('button', { type: 'button', class: 'kvc-ibtn', title: 'Cambiar tema', 'aria-label': 'Cambiar tema' }, icon(dark ? 'sun' : 'moon'));
+    var themeBtn = h('button', { type: 'button', class: 'kvc-ibtn', title: _('Cambiar tema'), 'aria-label': _('Cambiar tema') }, icon(dark ? 'sun' : 'moon'));
+    var langBtn = h('button', { type: 'button', class: 'kvc-ibtn kvc-lang', title: _('Idioma'), 'aria-label': lang === 'es' ? 'English' : 'Español',
+      on: { click: function () {
+        var next = lang === 'es' ? 'en' : 'es';
+        try { if (opts.storage !== false) localStorage.setItem('kvc-lang', next); } catch (e) { /* sin storage */ }
+        relaunch(next, view);
+      } } }, lang === 'es' ? 'EN' : 'ES');
     var header = h('header', { class: 'kvc-head' },
       h('div', { class: 'kvc-head-in' },
         h('button', { type: 'button', class: 'kvc-head-brand', on: { click: function () { setView('hub'); } } },
@@ -2823,12 +2994,13 @@ var qrcode = function() {
             p.logoWord ? h('img', { src: R(p.logoWord), alt: p.company, class: 'kvc-head-word' })
               : (p.logoMark && p.logoMark === p.logo ? null : h('strong', { class: 'kvc-head-co', text: p.company }))),
           h('span', { class: 'kvc-head-meta' },
-            h('span', { class: 'kvc-badge', text: 'Oficial' }),
-            h('span', { class: 'kvc-head-sub', text: 'Tarjeta de Contacto Ejecutiva' }))),
+            h('span', { class: 'kvc-badge', text: _('Oficial') }),
+            h('span', { class: 'kvc-head-sub', text: _('Tarjeta de Contacto Ejecutiva') }))),
         h('div', { class: 'kvc-head-actions' },
-          h('nav', { class: 'kvc-tabs', 'aria-label': 'Vistas' },
-            tab('hub', 'contact', 'Hub'), tab('card', 'id-card', 'Tarjeta 3D'), tab('qr', 'qr-code', 'Código QR')),
-          h('button', { type: 'button', class: 'kvc-ibtn', title: 'Compartir tarjeta', 'aria-label': 'Compartir', on: { click: onShare } }, icon('share-2')),
+          h('nav', { class: 'kvc-tabs', 'aria-label': _('Vistas') },
+            tab('hub', 'contact', 'Hub'), tab('card', 'id-card', _('Tarjeta 3D')), tab('qr', 'qr-code', _('Código QR'))),
+          h('button', { type: 'button', class: 'kvc-ibtn', title: _('Compartir tarjeta'), 'aria-label': _('Compartir'), on: { click: onShare } }, icon('share-2')),
+          langBtn,
           themeBtn)));
 
     /* ── Vista 1: Hub ── */
@@ -2836,7 +3008,7 @@ var qrcode = function() {
       return a(c.href, 'kvc-hl kvc-c-' + c.key + (c.key === 'whatsapp' ? ' kvc-hl-main' : ''), null, [
         h('span', { class: 'kvc-hl-ic' }, icon(c.icon)),
         h('span', { class: 'kvc-hl-txt' },
-          h('strong', null, HUB_TITLES[c.key] || c.label, c.key === 'whatsapp' ? h('em', { class: 'kvc-chip-main', text: 'Principal' }) : null),
+          h('strong', null, _(HUB_TITLES[c.key] || c.label), c.key === 'whatsapp' ? h('em', { class: 'kvc-chip-main', text: _('Principal') }) : null),
           h('small', { text: c.sub })),
         h('span', { class: 'kvc-hl-go' }, icon('chevron-right'))]);
     });
@@ -2844,10 +3016,80 @@ var qrcode = function() {
     // «Canales Oficiales», para no duplicarlo.
     var pills = [];
     if (L.whatsapp) pills.push(a(L.whatsapp, 'kvc-pill kvc-pill-wa kvc-c-whatsapp', null, [icon('whatsapp'), h('span', { text: 'WhatsApp' })]));
-    if (L.phone) pills.push(a(L.phone, 'kvc-pill kvc-c-phone', null, [icon('phone'), h('span', { text: 'Llamar' })]));
+    if (L.phone) pills.push(a(L.phone, 'kvc-pill kvc-c-phone', null, [icon('phone'), h('span', { text: _('Llamar') })]));
     function cornerLogo(cls) {
       return p.logo ? h('a', { class: 'kvc-corner-logo ' + cls, href: L.website || null, target: L.website ? '_blank' : null, rel: 'noopener noreferrer', title: p.company },
         h('img', { src: R(p.logo), alt: p.company })) : null;
+    }
+
+    /* «Déjame tus datos» (v1.2). Con gateway (tarjeta publicada en KIMOS) el
+       envío llega a la app como prospecto. Sin gateway (HTML alojado en otro
+       sitio) abre WhatsApp con los datos ya escritos: nunca se pierden. */
+    var leadBox = null;
+    if (p.leadForm === 'on' && (opts.leadEndpoint || L.whatsapp)) {
+      var direct = !opts.leadEndpoint;
+      var first = (p.firstName || p.name.split(' ')[0] || '').trim();
+      var f = {};
+      var leadField = function (id, label, type, req, area) {
+        var inp = h(area ? 'textarea' : 'input', {
+          class: 'kvc-input kvc-lead-in', id: 'kvc-lead-' + id, name: id, type: area ? null : type, rows: area ? '3' : null,
+          maxlength: area ? '600' : '120', autocomplete: { name: 'name', company: 'organization', email: 'email', phone: 'tel' }[id] || 'off'
+        });
+        f[id] = inp;
+        return h('label', { class: 'kvc-lead-f' + (area ? ' kvc-lead-wide' : ''), for: 'kvc-lead-' + id }, h('span', { text: _(label) + (req ? ' *' : '') }), inp);
+      };
+      var hp = h('input', { type: 'text', name: '_hp', tabindex: '-1', autocomplete: 'off', class: 'kvc-hp', 'aria-hidden': 'true' });
+      var leadMsg = h('p', { class: 'kvc-lead-msg', role: 'status', 'aria-live': 'polite' });
+      var sendBtn = h('button', { type: 'submit', class: 'kvc-lead-send' + (direct ? ' kvc-lead-wa' : '') },
+        icon(direct ? 'whatsapp' : 'send'), h('span', { text: direct ? _('Enviar por WhatsApp') : _('Enviar mis datos') }));
+      var form = h('form', { class: 'kvc-lead-form', novalidate: true },
+        leadField('name', 'Nombre', 'text', true), leadField('company', 'Empresa', 'text'),
+        leadField('email', 'Correo', 'email'), leadField('phone', 'WhatsApp o teléfono', 'tel'),
+        leadField('message', '¿En qué te puedo ayudar?', 'text', false, true), hp, sendBtn, leadMsg);
+      var setMsg = function (t, kind) { leadMsg.textContent = t; leadMsg.className = 'kvc-lead-msg' + (kind ? ' kvc-lead-' + kind : ''); };
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var v = {};
+        Object.keys(f).forEach(function (k) { v[k] = String(f[k].value || '').trim(); });
+        if (!v.name) { setMsg(_('Escribe tu nombre.'), 'err'); f.name.focus(); return; }
+        if (!v.email && !v.phone) { setMsg(_('Deja un correo o un teléfono para responderte.'), 'err'); f.email.focus(); return; }
+        if (v.email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.email)) { setMsg(_('Ese correo no parece válido.'), 'err'); f.email.focus(); return; }
+        if (opts.preview) { setMsg(_('Vista previa: el formulario envía en la tarjeta publicada.'), ''); return; }
+        if (direct) {
+          var txt = lang === 'en'
+            ? 'Hi ' + first + ', I am ' + v.name + (v.company ? ' from ' + v.company : '') + '.' + (v.message ? ' ' + v.message.replace(/\s*$/, '').replace(/([^.!?])$/, '$1.') : '') +
+              (v.email ? ' My email: ' + v.email + '.' : '') + (v.phone ? ' My phone: ' + v.phone + '.' : '')
+            : 'Hola ' + first + ', soy ' + v.name + (v.company ? ' de ' + v.company : '') + '.' + (v.message ? ' ' + v.message.replace(/\s*$/, '').replace(/([^.!?])$/, '$1.') : '') +
+              (v.email ? ' Mi correo: ' + v.email + '.' : '') + (v.phone ? ' Mi teléfono: ' + v.phone + '.' : '');
+          var link = h('a', { href: 'https://wa.me/' + p.whatsapp + '?text=' + encodeURIComponent(txt), target: '_blank', rel: 'noopener noreferrer', style: 'display:none' });
+          document.body.appendChild(link); link.click(); link.remove();
+          setMsg(_('Se abrió WhatsApp con tus datos: solo falta tocar Enviar.'), 'ok');
+          return;
+        }
+        sendBtn.disabled = true;
+        setMsg(_('Enviando…'), '');
+        fetch(opts.leadEndpoint, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: v.name, company: v.company, email: v.email, phone: v.phone, message: v.message, lang: lang, source: 'tarjeta', _hp: hp.value })
+        }).then(function (r) {
+          sendBtn.disabled = false;
+          if (r.status === 429) { setMsg(_('Demasiados envíos seguidos. Espera un minuto.'), 'err'); return; }
+          if (!r.ok) { setMsg(_('No se pudo enviar. Inténtalo otra vez o escríbeme por WhatsApp.'), 'err'); return; }
+          form.hidden = true;
+          thanks.hidden = false;
+        }).catch(function () {
+          sendBtn.disabled = false;
+          setMsg(_('No se pudo enviar. Inténtalo otra vez o escríbeme por WhatsApp.'), 'err');
+        });
+      });
+      var thanks = h('div', { class: 'kvc-lead-thanks', hidden: true },
+        h('span', { class: 'kvc-lead-ok' }, icon('check')),
+        h('strong', { text: _('¡Gracias! Te contactaré pronto.') }),
+        h('button', { type: 'button', class: 'kvc-mini-btn', on: { click: function () { form.reset(); setMsg('', ''); thanks.hidden = true; form.hidden = false; } } }, _('Enviar otro')));
+      leadBox = h('section', { class: 'kvc-lead', id: 'kvc-lead' },
+        h('div', { class: 'kvc-divider' }, h('span', { text: _('Déjame tus datos') })),
+        h('p', { class: 'kvc-lead-intro', text: _('Te contacto yo. Tus datos solo llegan a ') + (first || p.name) + '.' }),
+        form, thanks);
     }
 
     var hub = h('section', { class: 'kvc-view kvc-hub', 'data-view': 'hub' },
@@ -2859,26 +3101,27 @@ var qrcode = function() {
             h('div', { class: 'kvc-avatar-ring' },
               p.photo ? h('img', { src: R(p.photo), alt: p.name, class: 'kvc-avatar-img' })
                 : h('div', { class: 'kvc-avatar-ph', text: (p.name || '?').split(' ').map(function (w) { return w[0]; }).slice(0, 2).join('') })),
-            h('span', { class: 'kvc-verified', title: 'Perfil verificado' }, icon('check'))),
+            h('span', { class: 'kvc-verified', title: _('Perfil verificado') }, icon('check'))),
           h('h1', { class: 'kvc-name', text: p.name }),
           h('div', { class: 'kvc-role' },
             h('span', { class: 'kvc-title' }, h('span', { class: 'kvc-dot' }), p.title),
             p.company ? h('span', { class: 'kvc-company', text: p.company }) : null),
           p.tagline ? h('p', { class: 'kvc-tagline', text: p.tagline }) : null,
           h('button', { type: 'button', class: 'kvc-save', on: { click: onSave } },
-            icon('user-plus', 'kvc-bounce'), h('span', { text: 'Guardar Contacto en el Teléfono' }), h('span', { class: 'kvc-save-chip', text: 'vCard .VCF' })),
+            icon('user-plus', 'kvc-bounce'), h('span', { text: _('Guardar Contacto en el Teléfono') }), h('span', { class: 'kvc-save-chip', text: 'vCard .VCF' })),
           pills.length ? h('div', { class: 'kvc-pills kvc-pills-' + pills.length }, pills) : null),
-        h('div', { class: 'kvc-divider' }, h('span', { text: 'Canales Oficiales' })),
+        h('div', { class: 'kvc-divider' }, h('span', { text: _('Canales Oficiales') })),
         h('div', { class: 'kvc-hlist' }, hubList),
+        leadBox,
         h('div', { class: 'kvc-mini' },
-          h('button', { type: 'button', class: 'kvc-mini-qr', 'aria-label': 'Ver código QR', on: { click: function () { setView('qr'); } } }, qrSlot('', false)),
+          h('button', { type: 'button', class: 'kvc-mini-qr', 'aria-label': _('Ver código QR'), on: { click: function () { setView('qr'); } } }, qrSlot('', false)),
           h('div', { class: 'kvc-mini-txt' },
-            h('strong', { text: 'Código QR Dinámico' }),
-            h('small', { text: 'Escanea para compartir o abrir en otro celular' })),
-          h('button', { type: 'button', class: 'kvc-mini-btn', on: { click: function () { setView('qr'); } } }, 'Ver QR')),
+            h('strong', { text: _('Código QR Dinámico') }),
+            h('small', { text: _('Escanea para compartir o abrir en otro celular') })),
+          h('button', { type: 'button', class: 'kvc-mini-btn', on: { click: function () { setView('qr'); } } }, _('Ver QR'))),
         h('div', { class: 'kvc-powered' },
-          h('div', null, h('span', { text: 'Impulsado por ' }), h('strong', { text: p.company || 'KIMOS' })),
-          h('small', { text: 'Ecosistema de Tarjetas Digitales Inteligentes' }))));
+          h('div', null, h('span', { text: _('Impulsado por ') }), h('strong', { text: p.company || 'KIMOS' })),
+          h('small', { text: _('Ecosistema de Tarjetas Digitales Inteligentes') }))));
 
     /* ── Vista 2: Tarjeta 3D ── */
     var waDigits = p.whatsapp, telDigits = (p.phone || '').replace(/\D/g, '');
@@ -2895,7 +3138,7 @@ var qrcode = function() {
       h('div', { class: 'kvc-face kvc-front' },
         h('div', { class: 'kvc-front-side' },
           h('div', { class: 'kvc-front-avatar' }, p.photo ? h('img', { src: R(p.photo), alt: p.name }) : null),
-          h('div', { class: 'kvc-front-qr' }, qrSlot('kvc-front-qrbox', false), h('span', { text: 'Escanear contacto' }))),
+          h('div', { class: 'kvc-front-qr' }, qrSlot('kvc-front-qrbox', false), h('span', { text: _('Escanear contacto') }))),
         h('div', { class: 'kvc-front-main' },
           p.logo ? h('div', { class: 'kvc-front-logo' }, h('img', { src: R(p.logo), alt: p.company })) : null,
           h('div', { class: 'kvc-front-head' },
@@ -2924,36 +3167,43 @@ var qrcode = function() {
     var scene = h('div', { class: 'kvc-scene', on: { click: function (e) { if (!e.target.closest('a')) flip(); } } }, card3d);
     var cardView = h('section', { class: 'kvc-view kvc-cardview', 'data-view': 'card' },
       h('div', { class: 'kvc-flipbar' },
-        h('span', null, icon('rotate-cw'), h('span', { text: 'Haz clic para voltear la tarjeta' })),
-        h('button', { type: 'button', class: 'kvc-btn-xs', on: { click: flip } }, icon('repeat'), h('span', { text: 'Voltear' }))),
+        h('span', null, icon('rotate-cw'), h('span', { text: _('Haz clic para voltear la tarjeta') })),
+        h('button', { type: 'button', class: 'kvc-btn-xs', on: { click: flip } }, icon('repeat'), h('span', { text: _('Voltear') }))),
       scene,
       h('div', { class: 'kvc-card-actions' },
-        h('button', { type: 'button', class: 'kvc-btn-s kvc-btn-s-primary', on: { click: onSave } }, icon('download'), h('span', { text: 'Descargar Contacto (vCard)' })),
-        opts.preview ? null : h('button', { type: 'button', class: 'kvc-btn-s', on: { click: function () { window.print(); } } }, icon('printer'), h('span', { text: 'Imprimir Tarjeta' })),
-        h('button', { type: 'button', class: 'kvc-btn-s', on: { click: onShare } }, icon('share-2'), h('span', { text: 'Compartir' }))));
+        h('button', { type: 'button', class: 'kvc-btn-s kvc-btn-s-primary', on: { click: onSave } }, icon('download'), h('span', { text: _('Descargar Contacto (vCard)') })),
+        opts.preview ? null : h('button', { type: 'button', class: 'kvc-btn-s', on: { click: function () { window.print(); } } }, icon('printer'), h('span', { text: _('Imprimir Tarjeta') })),
+        h('button', { type: 'button', class: 'kvc-btn-s', on: { click: onShare } }, icon('share-2'), h('span', { text: _('Compartir') }))));
 
     /* ── Vista 3: Código QR ── */
-    var urlInput = h('input', { class: 'kvc-input kvc-mono', value: qrUrl, 'aria-label': 'Enlace de destino del QR', spellcheck: 'false' });
+    var urlInput = h('input', { class: 'kvc-input kvc-mono', value: qrUrl, 'aria-label': _('Enlace de destino del QR'), spellcheck: 'false' });
     var urlMsg = h('small', { class: 'kvc-field-err' });
     // Destinos sugeridos: todos son enlaces https reales que abren el canal
     // directamente al escanear. La tarjeta digital es el destino por defecto.
-    var dests = [{ key: 'card', icon: 'contact', label: 'Tarjeta digital', url: baseQr }];
+    var dests = [{ key: 'card', icon: 'contact', label: _('Tarjeta digital'), url: baseQr }];
     if (L.whatsapp) dests.push({ key: 'whatsapp', icon: 'whatsapp', label: 'WhatsApp', url: L.whatsapp });
-    if (L.website) dests.push({ key: 'website', icon: 'globe', label: 'Sitio web', url: L.website });
+    if (L.website) dests.push({ key: 'website', icon: 'globe', label: _('Sitio web'), url: L.website });
     if (L.instagram) dests.push({ key: 'instagram', icon: 'instagram', label: 'Instagram', url: L.instagram });
     if (L.linkedin) dests.push({ key: 'linkedin', icon: 'linkedin', label: 'LinkedIn', url: L.linkedin });
+    if (p.name && (p.phone || p.email)) dests.push({ key: 'vcard', icon: 'user-plus', label: _('Contacto sin internet'), url: vcardLite(p) });
     var destBtns = [];
     var destHint = h('small', { class: 'kvc-dest-hint' });
     function markDest() {
       var cur = dests.filter(function (d) { return d.url === qrUrl; })[0];
       destBtns.forEach(function (b) { b.classList.toggle('kvc-on', !!cur && b.getAttribute('data-k') === cur.key); });
-      destHint.textContent = !cur ? 'Destino personalizado.'
-        : cur.key === 'card' ? 'Al escanear se abre tu tarjeta digital con todos tus canales.'
-        : 'Al escanear se abre directamente ' + cur.label + '.';
+      destHint.textContent = !cur ? _('Destino personalizado.')
+        : cur.key === 'card' ? _('Al escanear se abre tu tarjeta digital con todos tus canales.')
+        : cur.key === 'vcard' ? _('El contacto va dentro del QR: se guarda en la agenda sin conexión.')
+        : _('Al escanear se abre directamente ') + cur.label + '.';
     }
-    function setDest(u) { qrUrl = u; urlInput.value = u; urlMsg.textContent = ''; paintQr(); markDest(); }
-    var destRow = h('div', { class: 'kvc-dests', role: 'group', 'aria-label': 'Destino del QR' }, dests.map(function (d) {
-      var b = h('button', { type: 'button', class: 'kvc-dest kvc-c-' + (d.key === 'card' ? 'qr' : d.key), 'data-k': d.key, on: { click: function () { setDest(d.url); } } },
+    function setDest(u) {
+      qrUrl = u;
+      urlInput.value = u.indexOf('BEGIN:VCARD') === 0 ? 'vCard · ' + p.name : u;
+      urlInput.readOnly = u.indexOf('BEGIN:VCARD') === 0;
+      urlMsg.textContent = ''; paintQr(); markDest();
+    }
+    var destRow = h('div', { class: 'kvc-dests', role: 'group', 'aria-label': _('Destino del QR') }, dests.map(function (d) {
+      var b = h('button', { type: 'button', class: 'kvc-dest kvc-c-' + (d.key === 'card' || d.key === 'vcard' ? 'qr' : d.key), 'data-k': d.key, on: { click: function () { setDest(d.url); } } },
         icon(d.icon), h('span', { text: d.label }));
       destBtns.push(b);
       return b;
@@ -2961,7 +3211,7 @@ var qrcode = function() {
     urlInput.addEventListener('input', function () {
       var v = urlInput.value.trim();
       var c = checkQrUrl(v || baseQr);
-      urlMsg.textContent = c.ok ? (c.warn || '') : c.reason + ' El QR sigue apuntando a ' + qrUrl;
+      urlMsg.textContent = c.ok ? (c.warn || '') : c.reason + _(' El QR sigue apuntando a ') + qrUrl;
       if (c.ok) { qrUrl = v || baseQr; paintQr(); }
       markDest();
     });
@@ -2969,32 +3219,32 @@ var qrcode = function() {
     var qrView = h('section', { class: 'kvc-view kvc-qrview', 'data-view': 'qr' },
       h('div', { class: 'kvc-panel kvc-panel-qr' },
         cornerLogo('kvc-corner-tr'),
-        h('span', { class: 'kvc-kicker' }, icon('qr-code'), h('span', { text: 'Generador Dinámico ' + (p.company.replace(/\.ai$/i, '').toUpperCase() || 'KIMOS') })),
-        h('h2', { class: 'kvc-qr-title', text: 'Código QR Oficial' }),
-        h('p', { class: 'kvc-qr-sub', text: 'Apunta la cámara de cualquier teléfono para abrir instantáneamente la tarjeta virtual y canales de contacto.' }),
+        h('span', { class: 'kvc-kicker' }, icon('qr-code'), h('span', { text: _('Generador Dinámico ') + (p.company.replace(/\.ai$/i, '').toUpperCase() || 'KIMOS') })),
+        h('h2', { class: 'kvc-qr-title', text: _('Código QR Oficial') }),
+        h('p', { class: 'kvc-qr-sub', text: _('Apunta la cámara de cualquier teléfono para abrir instantáneamente la tarjeta virtual y canales de contacto.') }),
         h('div', { class: 'kvc-qr-frame' }, h('div', { class: 'kvc-qr-white' }, qrSlot('kvc-qr-big', true))),
         h('div', { class: 'kvc-field' },
-          h('label', null, h('span', { text: 'Enlace de Destino del QR:' }), h('em', { text: '100% Dinámico' })),
+          h('label', null, h('span', { text: _('Enlace de Destino del QR:') }), h('em', { text: '100% Dinámico' })),
           destRow,
           h('div', { class: 'kvc-field-row' }, urlInput,
-            h('button', { type: 'button', class: 'kvc-reset', title: 'Volver a la tarjeta digital', on: { click: function () { setDest(baseQr); } } }, 'Actual')),
+            h('button', { type: 'button', class: 'kvc-reset', title: _('Volver a la tarjeta digital'), on: { click: function () { setDest(baseQr); } } }, _('Actual'))),
           destHint,
           urlMsg,
-          h('small', { text: 'Puedes personalizar el enlace a tu propio dominio si lo requieres. Solo se aceptan direcciones https:// públicas.' })),
+          h('small', { text: _('Puedes personalizar el enlace a tu propio dominio si lo requieres. Solo se aceptan direcciones https:// públicas.') })),
         h('div', { class: 'kvc-qr-actions' },
-          h('button', { type: 'button', class: 'kvc-btn-s kvc-btn-s-primary', on: { click: onQrPng } }, icon('download'), h('span', { text: 'Descargar PNG HD' })),
-          h('button', { type: 'button', class: 'kvc-btn-s', on: { click: function () { copy(qrUrl, 'Enlace copiado'); } } }, icon('copy'), h('span', { text: 'Copiar Enlace' })))));
+          h('button', { type: 'button', class: 'kvc-btn-s kvc-btn-s-primary', on: { click: onQrPng } }, icon('download'), h('span', { text: _('Descargar PNG HD') })),
+          h('button', { type: 'button', class: 'kvc-btn-s', on: { click: function () { copy(qrUrl, _('Enlace copiado')); } } }, icon('copy'), h('span', { text: _('Copiar Enlace') })))));
 
     /* ── Pie ── */
     var footer = h('footer', { class: 'kvc-foot' },
       h('div', { class: 'kvc-foot-in' },
-        h('p', { text: '© ' + new Date().getFullYear() + ' ' + (p.company || '') + ' • ' + p.name + '. Todos los derechos reservados.' }),
+        h('p', { text: '© ' + new Date().getFullYear() + ' ' + (p.company || '') + ' • ' + p.name + _('. Todos los derechos reservados.') }),
         h('div', { class: 'kvc-foot-links' },
           L.website ? a(L.website, '', null, [prettyUrl(p.website)]) : null,
           L.linkedin ? h('span', { text: '•' }) : null,
           L.linkedin ? a(L.linkedin, '', null, ['LinkedIn']) : null,
           h('span', { text: '•' }),
-          h('button', { type: 'button', on: { click: function () { openModal(vcardModal()); } } }, 'Ver Datos vCard'))));
+          h('button', { type: 'button', on: { click: function () { openModal(vcardModal()); } } }, _('Ver Datos vCard')))));
 
     var bg = h('div', { class: 'kvc-bg', 'aria-hidden': 'true' }, contour('kvc-bg-a', 5), contour('kvc-bg-b', 3));
     var wrap = h('div', {
@@ -3025,6 +3275,7 @@ var qrcode = function() {
     return {
       qrUrl: function () { return qrUrl; },
       profile: p,
+      lang: lang,
       setView: setView,
       destroy: function () { cleanups.forEach(function (f) { f(); }); clearTimeout(toastT); }
     };
@@ -3048,7 +3299,7 @@ var qrcode = function() {
   }
 
   /* ── Estilos de la tarjeta (todo bajo .kvc) ─────────────────────────── */
-  var CSS = "/* KIMOS vCard — interfaz de la tarjeta (Hub · Tarjeta 3D · Código QR).\n   Todo bajo .kvc. Los colores son tokens con nombre: marca FIGIT por\n   defecto y re-definibles por perfil (--kvc-primary/ink/soft/accent). */\n.kvc {\n  --kvc-primary: #0052FF;\n  --kvc-ink: #0D366B;\n  --kvc-soft: #DDF0FF;\n  --kvc-accent: #00D2FF;\n  --kvc-primary-2: color-mix(in srgb, var(--kvc-primary) 82%, #000);\n  --kvc-page: #F8FAFC;\n  --kvc-surface: #FFFFFF;\n  --kvc-head: rgba(255, 255, 255, .82);\n  --kvc-text: #0F172A;\n  --kvc-text-2: #334155;\n  --kvc-muted: #64748B;\n  --kvc-faint: #94A3B8;\n  --kvc-line: #E2E8F0;\n  --kvc-tile: #F8FAFC;\n  --kvc-pill: #F1F5F9;\n  --kvc-tint: #EDF5FF;\n  --kvc-wa: #10B981;\n  --kvc-wa-brand: #25D366;\n  --kvc-li: #0284C7;\n  --kvc-web: #4F46E5;\n  --kvc-ig: #DB2777;\n  --kvc-ig-1: #F59E0B;\n  --kvc-map: #E11D48;\n  --kvc-tel: #E53E3E;\n  --kvc-mail: var(--kvc-primary);\n  --kvc-on: #FFFFFF;\n  --kvc-shadow: 0 20px 45px -15px rgba(0, 36, 128, .14);\n  --kvc-glow: 0 0 25px -5px color-mix(in srgb, var(--kvc-primary) 50%, transparent);\n  position: relative;\n  min-height: 100%;\n  display: flex;\n  flex-direction: column;\n  overflow: hidden;\n  container-type: inline-size;\n  background: var(--kvc-page);\n  color: var(--kvc-text);\n  font-family: \"Plus Jakarta Sans\", Inter, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif;\n  -webkit-font-smoothing: antialiased;\n  -webkit-tap-highlight-color: transparent;\n  line-height: 1.4;\n  transition: background .3s, color .3s;\n}\n.kvc.kvc-dark {\n  --kvc-page: #070C18;\n  --kvc-surface: #0D162B;\n  --kvc-head: rgba(8, 14, 30, .82);\n  --kvc-text: #F1F5F9;\n  --kvc-text-2: #CBD5E1;\n  --kvc-muted: #94A3B8;\n  --kvc-faint: #64748B;\n  --kvc-line: #1E293B;\n  --kvc-tile: rgba(30, 41, 59, .5);\n  --kvc-pill: rgba(30, 41, 59, .8);\n  --kvc-tint: rgba(7, 22, 73, .45);\n  --kvc-li: #38BDF8;\n  --kvc-web: #818CF8;\n  --kvc-ig: #F472B6;\n  --kvc-mail: var(--kvc-accent);\n  --kvc-shadow: 0 25px 50px -12px rgba(0, 0, 0, .55);\n}\n.kvc *, .kvc *::before, .kvc *::after { box-sizing: border-box; }\n.kvc [hidden] { display: none !important; }\n.kvc a { color: inherit; text-decoration: none; }\n.kvc button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; padding: 0; }\n.kvc .kvc-i { width: 1em; height: 1em; flex: none; display: block; }\n.kvc img { display: block; }\n\n/* Fondo: contornos y patrón de puntos */\n.kvc .kvc-bg { position: absolute; inset: 0; pointer-events: none; overflow: hidden; opacity: .4; z-index: 0;\n  background-image: radial-gradient(color-mix(in srgb, var(--kvc-primary) 8%, transparent) 1px, transparent 1px); background-size: 24px 24px; }\n.kvc.kvc-dark .kvc-bg { opacity: .25; }\n.kvc .kvc-bg-a { position: absolute; right: -144px; top: -144px; width: 650px; height: 650px; color: var(--kvc-primary); opacity: .2; }\n.kvc .kvc-bg-b { position: absolute; left: -192px; bottom: -192px; width: 700px; height: 700px; color: var(--kvc-accent); opacity: .25; }\n.kvc > *:not(.kvc-bg) { position: relative; z-index: 1; }\n\n/* ── Cabecera ─────────────────────────────────────────────────────────── */\n.kvc .kvc-head { position: sticky; top: 0; z-index: 40; background: var(--kvc-head); border-bottom: 1px solid var(--kvc-line);\n  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }\n.kvc.kvc-preview .kvc-head { position: relative; }\n.kvc .kvc-head-in { max-width: 896px; margin: 0 auto; padding: 0 16px; height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }\n.kvc .kvc-head-brand { display: flex; align-items: center; gap: 10px; min-width: 0; text-align: left; }\n.kvc .kvc-head-logo { height: 40px; display: flex; align-items: center; gap: 6px; background: #FFFFFF; padding: 4px 8px 4px 6px; border-radius: 10px; border: 1px solid var(--kvc-line); }\n.kvc .kvc-head-mark { height: 28px; width: auto; }\n.kvc .kvc-head-word { height: 13px; width: auto; }\n.kvc .kvc-head-meta { display: flex; flex-direction: column; gap: 2px; }\n.kvc .kvc-badge { align-self: flex-start; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; padding: 1px 6px; border-radius: 5px;\n  background: var(--kvc-tint); color: var(--kvc-primary); border: 1px solid color-mix(in srgb, var(--kvc-primary) 25%, transparent); }\n.kvc.kvc-dark .kvc-badge { color: var(--kvc-accent); }\n.kvc .kvc-head-sub { font-size: 10px; color: var(--kvc-muted); display: none; }\n.kvc .kvc-head-actions { display: flex; align-items: center; gap: 6px; }\n.kvc .kvc-tabs { display: flex; padding: 4px; gap: 2px; border-radius: 12px; background: var(--kvc-pill); border: 1px solid var(--kvc-line); }\n.kvc .kvc-tab { display: flex; align-items: center; gap: 6px; padding: 7px 10px; border-radius: 9px; font-size: 12px; font-weight: 600; color: var(--kvc-text-2); transition: all .2s; }\n.kvc .kvc-tab .kvc-i { font-size: 14px; }\n.kvc .kvc-tab:hover { color: var(--kvc-primary); }\n.kvc .kvc-tab.kvc-tab-on { color: var(--kvc-on); background: var(--kvc-primary); box-shadow: 0 2px 8px -2px color-mix(in srgb, var(--kvc-primary) 60%, transparent); }\n.kvc .kvc-tab-t { display: none; }\n.kvc .kvc-ibtn { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; font-size: 15px; background: var(--kvc-pill); border: 1px solid var(--kvc-line); color: var(--kvc-text-2); transition: color .2s; }\n.kvc .kvc-ibtn:hover { color: var(--kvc-primary); }\n\n/* ── Cuerpo y vistas ──────────────────────────────────────────────────── */\n.kvc .kvc-body { flex: 1; display: flex; align-items: flex-start; justify-content: center; padding: 24px 14px 32px; }\n.kvc .kvc-view { width: 100%; animation: kvc-in .45s cubic-bezier(.2, .8, .2, 1) both; }\n@keyframes kvc-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }\n.kvc .kvc-hub, .kvc .kvc-qrview { max-width: 448px; }\n.kvc .kvc-panel { position: relative; overflow: hidden; padding: 26px 22px 22px; border-radius: 24px; background: var(--kvc-surface); border: 1px solid var(--kvc-line); box-shadow: var(--kvc-shadow); }\n.kvc .kvc-panel-bar { position: absolute; inset: 0 0 auto 0; height: 6px; background: linear-gradient(90deg, var(--kvc-primary), var(--kvc-accent), var(--kvc-primary-2)); }\n\n/* Hub · perfil */\n.kvc .kvc-profile { display: flex; flex-direction: column; align-items: center; text-align: center; }\n.kvc .kvc-avatar { position: relative; margin-bottom: 16px; }\n.kvc .kvc-avatar-ring { width: 128px; height: 128px; border-radius: 50%; padding: 4px; box-shadow: var(--kvc-glow);\n  background: linear-gradient(45deg, var(--kvc-primary), var(--kvc-accent), var(--kvc-primary-2)); }\n.kvc .kvc-avatar-img, .kvc .kvc-avatar-ph { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; object-position: 50% 25%;\n  border: 2px solid var(--kvc-surface); background: #FFFFFF; }\n.kvc .kvc-avatar-ph { display: grid; place-items: center; font-size: 40px; font-weight: 800; color: var(--kvc-primary); }\n.kvc .kvc-verified { position: absolute; right: 6px; bottom: 4px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 12px;\n  color: var(--kvc-on); background: var(--kvc-primary); border: 2px solid var(--kvc-surface); box-shadow: 0 4px 10px -2px rgba(0, 0, 0, .25); }\n.kvc .kvc-name { margin: 0; font-size: 28px; line-height: 1.15; font-weight: 800; letter-spacing: -.02em; color: var(--kvc-text); }\n.kvc .kvc-role { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: 8px; }\n.kvc .kvc-role .kvc-title { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; border-radius: 999px; font-size: 12.5px;\n  background: var(--kvc-tint); border: 1px solid color-mix(in srgb, var(--kvc-primary) 22%, transparent); }\n.kvc .kvc-role .kvc-company { font-size: 13px; }\n.kvc .kvc-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--kvc-primary); animation: kvc-pulse 2s infinite; }\n@keyframes kvc-pulse { 50% { opacity: .45; } }\n.kvc .kvc-title { font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--kvc-primary-2); }\n.kvc.kvc-dark .kvc-title { color: var(--kvc-accent); }\n.kvc .kvc-sep { color: var(--kvc-faint); }\n.kvc .kvc-company { font-weight: 600; color: var(--kvc-text-2); }\n.kvc .kvc-tagline { margin: 12px 0 0; max-width: 320px; font-size: 13px; color: var(--kvc-muted); line-height: 1.6; }\n.kvc .kvc-save { width: 100%; margin-top: 20px; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 14px 18px; border-radius: 16px;\n  font-size: 14px; font-weight: 700; color: var(--kvc-on); background: linear-gradient(90deg, var(--kvc-primary), var(--kvc-primary-2)); box-shadow: var(--kvc-glow); transition: transform .15s, filter .2s; }\n.kvc .kvc-save:hover { filter: brightness(1.06); }\n.kvc .kvc-save:active { transform: scale(.98); }\n.kvc .kvc-save .kvc-i { font-size: 18px; }\n.kvc .kvc-bounce { animation: kvc-bounce 1.2s infinite; }\n@keyframes kvc-bounce { 0%, 100% { transform: translateY(-15%); animation-timing-function: cubic-bezier(.8, 0, 1, 1); } 50% { transform: none; animation-timing-function: cubic-bezier(0, 0, .2, 1); } }\n.kvc .kvc-save-chip { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: 2px 8px; border-radius: 999px; background: rgba(255, 255, 255, .2); }\n.kvc .kvc-pills { width: 100%; margin-top: 12px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }\n.kvc .kvc-pills-2 { grid-template-columns: 1.4fr 1fr; }\n.kvc .kvc-pills-1 { grid-template-columns: 1fr; }\n.kvc .kvc-pills-2 .kvc-pill, .kvc .kvc-pills-1 .kvc-pill { flex-direction: row; justify-content: center; gap: 8px; padding: 12px 10px; font-size: 13px; }\n.kvc .kvc-pill-wa { font-weight: 700; }\n/* Logo de la marca en las esquinas (Hub: arriba-izquierda · QR: arriba-derecha) */\n.kvc .kvc-corner-logo { position: absolute; z-index: 2; top: 16px; display: block; padding: 6px 7px; border-radius: 12px; background: #FFFFFF; border: 1px solid var(--kvc-line); box-shadow: 0 4px 12px -6px rgba(0, 0, 0, .18); }\n.kvc .kvc-corner-logo img { height: 46px; width: auto; }\n.kvc .kvc-corner-tl { left: 16px; }\n.kvc .kvc-corner-tr { right: 16px; }\n.kvc .kvc-pill { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 6px; border-radius: 12px; font-size: 11px; font-weight: 600;\n  background: var(--kvc-pill); border: 1px solid var(--kvc-line); color: var(--kvc-text-2); transition: background .2s, transform .15s; }\n.kvc .kvc-pill .kvc-i { font-size: 15px; color: var(--kvc-primary); transition: transform .2s; }\n.kvc .kvc-pill:hover .kvc-i { transform: scale(1.12); }\n.kvc .kvc-pill-wa { background: color-mix(in srgb, var(--kvc-wa) 9%, var(--kvc-surface)); border-color: color-mix(in srgb, var(--kvc-wa) 30%, transparent); color: color-mix(in srgb, var(--kvc-wa) 70%, var(--kvc-text)); }\n.kvc .kvc-pill-wa .kvc-i { color: var(--kvc-wa); font-size: 17px; }\n\n.kvc .kvc-divider { display: flex; align-items: center; gap: 12px; margin: 24px 0 14px; font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--kvc-faint); font-weight: 600; }\n.kvc .kvc-divider::before, .kvc .kvc-divider::after { content: \"\"; flex: 1; height: 1px; background: var(--kvc-line); }\n\n/* Hub · canales */\n.kvc .kvc-c-whatsapp { --kvc-c: var(--kvc-wa); }\n.kvc .kvc-c-email { --kvc-c: var(--kvc-mail); }\n.kvc .kvc-c-linkedin { --kvc-c: var(--kvc-li); }\n.kvc .kvc-c-website { --kvc-c: var(--kvc-web); }\n.kvc .kvc-c-instagram { --kvc-c: var(--kvc-ig); }\n.kvc .kvc-c-maps { --kvc-c: var(--kvc-map); }\n.kvc .kvc-c-phone { --kvc-c: var(--kvc-tel); }\n.kvc .kvc-c-qr { --kvc-c: var(--kvc-primary); }\n.kvc .kvc-hlist { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }\n.kvc .kvc-hl-txt small { font-variant-numeric: tabular-nums; letter-spacing: .01em; }\n.kvc .kvc-hl { display: flex; align-items: center; gap: 14px; padding: 13px 12px 13px 13px; border-radius: 16px; background: var(--kvc-tile); border: 1px solid var(--kvc-line);\n  transition: border-color .2s, background .2s, transform .15s; }\n.kvc .kvc-hl:hover { border-color: var(--kvc-c); background: color-mix(in srgb, var(--kvc-c) 6%, var(--kvc-tile)); }\n.kvc .kvc-hl:active { transform: scale(.99); }\n.kvc .kvc-hl-ic { width: 44px; height: 44px; border-radius: 12px; flex: none; display: grid; place-items: center; font-size: 20px; color: var(--kvc-c);\n  background: color-mix(in srgb, var(--kvc-c) 11%, transparent); box-shadow: 0 1px 2px rgba(0, 0, 0, .05); transition: all .2s; }\n.kvc .kvc-hl:hover .kvc-hl-ic { color: var(--kvc-on); background: var(--kvc-c); }\n.kvc .kvc-c-instagram:hover .kvc-hl-ic { background: linear-gradient(45deg, var(--kvc-ig-1), var(--kvc-ig)); }\n.kvc .kvc-hl-txt { display: flex; flex-direction: column; min-width: 0; flex: 1; }\n.kvc .kvc-hl-txt strong { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; color: var(--kvc-text); transition: color .2s; }\n.kvc .kvc-hl:hover .kvc-hl-txt strong { color: var(--kvc-c); }\n.kvc .kvc-hl-txt small { font-size: 12px; color: var(--kvc-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: \"Space Grotesk\", \"Plus Jakarta Sans\", Inter, -apple-system, \"Segoe UI\", Roboto, sans-serif; }\n.kvc .kvc-c-maps .kvc-hl-txt small { font-family: inherit; }\n.kvc .kvc-hl-go { width: 32px; height: 32px; flex: none; display: grid; place-items: center; font-size: 14px; color: var(--kvc-faint); transition: transform .2s, color .2s; }\n.kvc .kvc-hl:hover .kvc-hl-go { color: var(--kvc-c); transform: translateX(3px); }\n.kvc .kvc-hl-main { border-color: color-mix(in srgb, var(--kvc-wa) 45%, transparent); background: color-mix(in srgb, var(--kvc-wa) 7%, var(--kvc-tile)); }\n.kvc .kvc-hl-main .kvc-hl-ic { color: var(--kvc-on); background: linear-gradient(135deg, var(--kvc-wa-brand), var(--kvc-wa)); }\n.kvc .kvc-chip-main { font-style: normal; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; padding: 2px 7px; border-radius: 999px;\n  color: var(--kvc-on); background: var(--kvc-wa); }\n\n/* Hub · mini QR */\n.kvc .kvc-mini { margin-top: 22px; padding: 14px; border-radius: 16px; display: flex; align-items: center; gap: 13px;\n  background: linear-gradient(135deg, var(--kvc-tint), color-mix(in srgb, var(--kvc-soft) 60%, transparent)); border: 1px solid color-mix(in srgb, var(--kvc-primary) 20%, transparent); }\n.kvc .kvc-mini-qr { width: 58px; height: 58px; flex: none; padding: 4px; border-radius: 12px; background: #FFFFFF; border: 1px solid var(--kvc-line); box-shadow: 0 1px 3px rgba(0, 0, 0, .06); }\n.kvc .kvc-mini-txt { flex: 1; display: flex; flex-direction: column; min-width: 0; }\n.kvc .kvc-mini-txt strong { font-size: 12px; color: var(--kvc-text); }\n.kvc .kvc-mini-txt small { font-size: 11px; color: var(--kvc-muted); }\n.kvc .kvc-mini-btn { padding: 7px 12px; border-radius: 12px; font-size: 12px; font-weight: 700; color: var(--kvc-primary); background: var(--kvc-surface); border: 1px solid var(--kvc-line); box-shadow: 0 1px 3px rgba(0, 0, 0, .06); transition: transform .15s; }\n.kvc.kvc-dark .kvc-mini-btn { color: var(--kvc-accent); }\n.kvc .kvc-mini-btn:hover { transform: scale(1.05); }\n.kvc .kvc-powered { margin-top: 22px; text-align: center; font-size: 12px; color: var(--kvc-faint); display: grid; gap: 3px; }\n.kvc .kvc-powered strong { color: var(--kvc-primary); }\n.kvc.kvc-dark .kvc-powered strong { color: var(--kvc-accent); }\n.kvc .kvc-powered small { font-size: 10px; }\n.kvc .kvc-qr-slot svg { width: 100%; height: auto; display: block; }\n\n/* ── Tarjeta 3D ───────────────────────────────────────────────────────── */\n.kvc .kvc-cardview { max-width: 672px; display: flex; flex-direction: column; align-items: center; }\n.kvc .kvc-flipbar { width: 100%; max-width: 512px; display: flex; align-items: center; justify-content: space-between; margin: 0 0 16px; padding: 0 6px; font-size: 12px; color: var(--kvc-muted); font-weight: 500; }\n.kvc .kvc-flipbar > span { display: flex; align-items: center; gap: 6px; }\n.kvc .kvc-flipbar > span .kvc-i { color: var(--kvc-primary); }\n.kvc .kvc-btn-xs { display: flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 9px; font-size: 12px; font-weight: 700; color: var(--kvc-on); background: var(--kvc-primary); }\n.kvc .kvc-scene { width: 100%; max-width: 576px; height: 340px; perspective: 1200px; cursor: pointer; user-select: none; }\n.kvc .kvc-c3d { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform .7s cubic-bezier(.2, .7, .2, 1); border-radius: 24px; }\n.kvc .kvc-c3d.kvc-flipped { transform: rotateY(180deg); }\n.kvc .kvc-face { position: absolute; inset: 0; border-radius: 24px; overflow: hidden; -webkit-backface-visibility: hidden; backface-visibility: hidden;\n  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, .3); }\n.kvc .kvc-front { display: flex; background: #FFFFFF; border: 1px solid #E2E8F0; color: #1E293B; }\n.kvc .kvc-front-side { width: 36%; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: space-around; padding: 18px 12px;\n  background: var(--kvc-soft); border-right: 1px solid color-mix(in srgb, var(--kvc-soft) 80%, var(--kvc-primary)); }\n.kvc .kvc-front-avatar { width: 88px; height: 88px; border-radius: 50%; padding: 3px; background: linear-gradient(135deg, var(--kvc-primary), var(--kvc-accent)); box-shadow: 0 4px 10px -3px rgba(0, 0, 0, .25); }\n.kvc .kvc-front-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; object-position: 50% 25%; background: #FFFFFF; }\n.kvc .kvc-front-logo { position: absolute; top: 14px; right: 14px; background: #FFFFFF; padding: 4px 5px; border-radius: 9px; box-shadow: 0 1px 4px rgba(0, 0, 0, .1); border: 1px solid #EEF2F7; }\n.kvc .kvc-front-logo img { height: 46px; width: auto; }\n.kvc .kvc-front-qr { display: flex; flex-direction: column; align-items: center; gap: 4px; }\n.kvc .kvc-front-qrbox { width: 112px; height: 112px; padding: 5px; border-radius: 12px; background: #FFFFFF; border: 1px solid color-mix(in srgb, var(--kvc-primary) 25%, #FFFFFF); }\n.kvc .kvc-front-qr > span { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--kvc-primary); font-family: \"Space Grotesk\", \"Plus Jakarta Sans\", Inter, -apple-system, \"Segoe UI\", Roboto, sans-serif; }\n.kvc .kvc-front-main { position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 20px 20px 14px; }\n.kvc .kvc-front-head { padding-right: 52px; }\n.kvc .kvc-fr.kvc-c-whatsapp { --kvc-c: var(--kvc-wa); }\n.kvc .kvc-fr.kvc-c-whatsapp .kvc-fr-t { font-weight: 700; color: #0F7A55; }\n.kvc .kvc-front-name { margin: 0; font-size: 21px; font-weight: 900; letter-spacing: -.02em; color: var(--kvc-ink); line-height: 1.15; }\n.kvc .kvc-front-title { margin: 3px 0 0; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--kvc-primary); }\n.kvc .kvc-front-co { margin: 0; font-size: 12px; font-weight: 500; color: #64748B; }\n.kvc .kvc-front-rule { width: 80px; height: 4px; border-radius: 9px; margin: 10px 0 4px; background: linear-gradient(90deg, var(--kvc-primary), var(--kvc-accent)); }\n.kvc .kvc-front-rows { display: grid; gap: 5px; }\n.kvc .kvc-fr { display: flex; align-items: center; gap: 9px; font-size: 11.5px; color: #334155; min-width: 0; }\n.kvc .kvc-fr-ic { width: 18px; flex: none; display: grid; place-items: center; font-size: 13px; color: var(--kvc-c); }\n.kvc .kvc-fr.kvc-c-email { --kvc-c: #C084FC; }\n.kvc .kvc-fr.kvc-c-website { --kvc-c: #0EA5E9; }\n.kvc .kvc-fr.kvc-c-linkedin { --kvc-c: #0A66C2; }\n.kvc .kvc-fr-t { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }\n.kvc .kvc-fr.kvc-c-phone .kvc-fr-t { font-weight: 600; color: #1E293B; }\n.kvc .kvc-fr:hover .kvc-fr-t { color: var(--kvc-c); text-decoration: underline; text-underline-offset: 2px; }\n.kvc .kvc-front-foot { margin-top: 8px; padding-top: 7px; border-top: 1px solid #F1F5F9; display: flex; justify-content: space-between; gap: 8px; font-size: 9.5px; color: #94A3B8; }\n.kvc .kvc-front-foot span { font-family: \"Space Grotesk\", \"Plus Jakarta Sans\", Inter, -apple-system, \"Segoe UI\", Roboto, sans-serif; }\n.kvc .kvc-front-foot strong { color: var(--kvc-primary-2); }\n.kvc .kvc-back { transform: rotateY(180deg); display: flex; flex-direction: column; justify-content: space-between; padding: 24px 26px; color: #FFFFFF;\n  background: linear-gradient(135deg, #080E1E, #0D1B2A, #040813); border: 1px solid color-mix(in srgb, var(--kvc-primary) 40%, transparent); }\n.kvc .kvc-back-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }\n.kvc .kvc-chipset { display: flex; align-items: center; gap: 10px; color: #94A3B8; }\n.kvc .kvc-chip { width: 44px; height: 32px; border-radius: 6px; border: 1px solid #B45309;\n  background: linear-gradient(45deg, #D97706, #FCD34D, #F59E0B);\n  box-shadow: inset 0 0 0 4px rgba(251, 191, 36, .55), inset 22px 0 0 -21px rgba(180, 83, 9, .5), inset 0 16px 0 -15px rgba(180, 83, 9, .5); }\n.kvc .kvc-nfc { font-size: 18px; }\n.kvc .kvc-back-pass { display: flex; align-items: center; gap: 8px; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--kvc-accent); font-family: \"Space Grotesk\", \"Plus Jakarta Sans\", Inter, -apple-system, \"Segoe UI\", Roboto, sans-serif; }\n.kvc .kvc-live { width: 10px; height: 10px; border-radius: 50%; background: #34D399; box-shadow: 0 0 14px #34D399; }\n.kvc .kvc-back-mid { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; }\n.kvc .kvc-back-logo { background: #FFFFFF; padding: 10px 12px; border-radius: 16px; box-shadow: var(--kvc-glow); }\n.kvc .kvc-back-logo img { height: 74px; width: auto; }\n.kvc .kvc-back-mid p { margin: 0; max-width: 380px; font-size: 12px; color: #94A3B8; }\n.kvc .kvc-back-foot { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #1E293B; font-size: 12px; color: #64748B; font-family: \"Space Grotesk\", \"Plus Jakarta Sans\", Inter, -apple-system, \"Segoe UI\", Roboto, sans-serif; }\n.kvc .kvc-back-foot > span:last-child { display: flex; gap: 16px; }\n.kvc .kvc-back-foot strong { color: var(--kvc-accent); }\n.kvc .kvc-back-foot em { font-style: normal; }\n.kvc .kvc-sheen { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .5s;\n  background: linear-gradient(115deg, transparent 20%, rgba(255, 255, 255, .25) 40%, rgba(0, 210, 255, .12) 50%, transparent 65%); background-size: 250% 250%; }\n.kvc .kvc-scene:hover .kvc-sheen { opacity: 1; animation: kvc-sheen 2.4s ease infinite; }\n@keyframes kvc-sheen { 0% { background-position: 100% 0; } 100% { background-position: -50% 0; } }\n.kvc .kvc-card-actions { margin-top: 24px; display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }\n\n/* Botones genéricos */\n.kvc .kvc-btn-s { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 18px; border-radius: 12px; font-size: 12px; font-weight: 700;\n  background: var(--kvc-surface); border: 1px solid var(--kvc-line); color: var(--kvc-text-2); transition: background .2s, transform .15s; }\n.kvc .kvc-btn-s:hover { background: var(--kvc-pill); }\n.kvc .kvc-btn-s:active { transform: scale(.98); }\n.kvc .kvc-btn-s-primary { color: var(--kvc-on); background: var(--kvc-primary); border-color: transparent; box-shadow: var(--kvc-glow); }\n.kvc .kvc-btn-s-primary:hover { background: var(--kvc-primary-2); }\n\n/* ── Código QR ────────────────────────────────────────────────────────── */\n.kvc .kvc-panel-qr { text-align: center; padding: 28px 24px; }\n.kvc .kvc-kicker { display: inline-flex; align-items: center; gap: 7px; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 700;\n  color: var(--kvc-primary-2); background: var(--kvc-tint); border: 1px solid color-mix(in srgb, var(--kvc-primary) 22%, transparent); }\n.kvc.kvc-dark .kvc-kicker { color: var(--kvc-accent); }\n.kvc .kvc-qr-title { margin: 12px 0 0; font-size: 24px; font-weight: 900; color: var(--kvc-text); }\n.kvc .kvc-qr-sub { margin: 4px 0 22px; font-size: 12px; color: var(--kvc-muted); }\n.kvc .kvc-qr-frame { display: inline-block; padding: 18px; border-radius: 24px; background: linear-gradient(45deg, var(--kvc-primary), var(--kvc-accent), var(--kvc-primary-2)); box-shadow: var(--kvc-glow); margin-bottom: 22px; }\n.kvc .kvc-qr-white { padding: 12px; border-radius: 16px; background: #FFFFFF; box-shadow: inset 0 2px 4px rgba(0, 0, 0, .06); }\n.kvc .kvc-qr-big { width: 220px; }\n.kvc .kvc-field { text-align: left; margin-bottom: 18px; }\n.kvc .kvc-field label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 12px; font-weight: 700; color: var(--kvc-text-2); }\n.kvc .kvc-field label em { font-style: normal; font-size: 10px; color: var(--kvc-primary); font-family: \"Space Grotesk\", \"Plus Jakarta Sans\", Inter, -apple-system, \"Segoe UI\", Roboto, sans-serif; }\n.kvc .kvc-field small { display: block; margin-top: 5px; font-size: 10px; color: var(--kvc-faint); }\n.kvc .kvc-field-row { position: relative; }\n.kvc .kvc-input { width: 100%; padding: 10px 70px 10px 13px; border-radius: 12px; font-size: 12px; color: var(--kvc-text); background: var(--kvc-tile); border: 1px solid var(--kvc-line); outline: none; }\n.kvc .kvc-input:focus { box-shadow: 0 0 0 2px var(--kvc-primary); }\n.kvc .kvc-mono { font-family: \"Space Grotesk\", \"Plus Jakarta Sans\", Inter, -apple-system, \"Segoe UI\", Roboto, sans-serif; }\n.kvc .kvc-reset { position: absolute; right: 7px; top: 7px; padding: 4px 8px; border-radius: 6px; font-size: 10px; background: var(--kvc-line); color: var(--kvc-text-2); }\n.kvc .kvc-qr-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }\n.kvc .kvc-qr-actions .kvc-btn-s { padding: 13px 10px; }\n\n/* ── Pie ──────────────────────────────────────────────────────────────── */\n.kvc .kvc-foot { border-top: 1px solid var(--kvc-line); padding: 16px; font-size: 12px; color: var(--kvc-faint); }\n.kvc .kvc-foot-in { max-width: 896px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }\n.kvc .kvc-foot-in p { margin: 0; }\n.kvc .kvc-foot-links { display: flex; align-items: center; gap: 12px; color: var(--kvc-muted); }\n.kvc .kvc-foot-links a:hover, .kvc .kvc-foot-links button:hover { color: var(--kvc-primary); }\n\n/* ── Modales y avisos ─────────────────────────────────────────────────── */\n.kvc .kvc-backdrop { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; background: rgba(2, 6, 23, .55); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); animation: kvc-fade .2s both; }\n.kvc.kvc-preview .kvc-backdrop { position: absolute; }\n@keyframes kvc-fade { from { opacity: 0; } }\n.kvc .kvc-modal { position: relative; width: 100%; max-width: 400px; max-height: 90vh; overflow: auto; padding: 24px 20px 20px; border-radius: 22px; background: var(--kvc-surface); border: 1px solid var(--kvc-line); box-shadow: var(--kvc-shadow); }\n.kvc .kvc-modal-x { position: absolute; right: 12px; top: 10px; width: 32px; height: 32px; border-radius: 10px; font-size: 22px; line-height: 1; color: var(--kvc-muted); }\n.kvc .kvc-modal-t { margin: 0 0 4px; font-size: 18px; font-weight: 800; color: var(--kvc-text); }\n.kvc .kvc-modal-s { margin: 0 0 16px; font-size: 12px; color: var(--kvc-muted); }\n.kvc .kvc-share-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }\n.kvc .kvc-share-opt { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 4px; border-radius: 14px; font-size: 11px; font-weight: 600; background: var(--kvc-tile); border: 1px solid var(--kvc-line); color: var(--kvc-text-2); }\n.kvc .kvc-share-ic { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; font-size: 19px; color: var(--kvc-on); background: var(--kvc-c); }\n.kvc .kvc-copy { display: flex; gap: 8px; }\n.kvc .kvc-copy .kvc-input { padding-right: 12px; }\n.kvc .kvc-pre { margin: 12px 0 14px; padding: 12px; border-radius: 12px; max-height: 260px; overflow: auto; font-size: 11px; line-height: 1.5; white-space: pre-wrap; word-break: break-all;\n  background: var(--kvc-tile); border: 1px solid var(--kvc-line); color: var(--kvc-text-2); font-family: ui-monospace, \"SF Mono\", Menlo, monospace; }\n.kvc .kvc-modal-actions { display: flex; gap: 10px; }\n.kvc .kvc-toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 40px); opacity: 0; pointer-events: none; z-index: 70;\n  max-width: calc(100% - 32px); padding: 12px 18px; border-radius: 12px; font-size: 12px; font-weight: 600; background: #0F172A; color: #FFFFFF; box-shadow: 0 20px 40px -10px rgba(0, 0, 0, .45); transition: all .3s; }\n.kvc .kvc-toast.kvc-on { opacity: 1; transform: translate(-50%, 0); }\n.kvc.kvc-preview .kvc-toast { position: absolute; }\n\n/* ── Ajustes por ancho ────────────────────────────────────────────────── */\n@container (min-width: 640px) {\n  .kvc .kvc-head-in { padding: 0 24px; }\n  .kvc .kvc-head-sub { display: block; }\n  .kvc .kvc-tab-t { display: inline; }\n  .kvc .kvc-tab { padding: 7px 12px; }\n  .kvc .kvc-body { padding: 40px 16px; align-items: center; }\n  .kvc .kvc-panel { padding: 28px; }\n  .kvc .kvc-name { font-size: 30px; }\n  .kvc .kvc-tagline { font-size: 14px; }\n  .kvc .kvc-scene { height: 350px; }\n  .kvc .kvc-front-side { width: 33.3%; padding: 20px; }\n  .kvc .kvc-front-avatar { width: 96px; height: 96px; }\n  .kvc .kvc-front-qrbox { width: 128px; height: 128px; }\n  .kvc .kvc-front-logo img { height: 56px; }\n  .kvc .kvc-front-head { padding-right: 64px; }\n  .kvc .kvc-front-main { padding: 26px 28px 16px; }\n  .kvc .kvc-front-name { font-size: 25px; }\n  .kvc .kvc-front-title { font-size: 14px; }\n  .kvc .kvc-fr { font-size: 13px; }\n  .kvc .kvc-foot-in { flex-direction: row; justify-content: space-between; text-align: left; }\n}\n@container (max-width: 400px) {\n  .kvc .kvc-scene { height: 300px; }\n  .kvc .kvc-front-side { padding: 12px 8px; }\n  .kvc .kvc-front-avatar { width: 68px; height: 68px; }\n  .kvc .kvc-front-logo img { height: 32px; }\n  .kvc .kvc-front-qrbox { width: 92px; height: 92px; }\n  .kvc .kvc-front-logo { top: 10px; right: 10px; padding: 3px; }\n  .kvc .kvc-front-logo img { height: 36px; }\n  .kvc .kvc-front-head { padding-right: 40px; }\n  .kvc .kvc-corner-logo img { height: 36px; }\n  .kvc .kvc-front-main { padding: 14px 12px 10px; }\n  .kvc .kvc-front-name { font-size: 17px; }\n  .kvc .kvc-front-title, .kvc .kvc-front-co { font-size: 10px; }\n  .kvc .kvc-fr { font-size: 10px; gap: 6px; }\n  .kvc .kvc-front-foot { font-size: 8px; }\n  .kvc .kvc-back { padding: 18px; }\n  .kvc .kvc-back-logo img { height: 56px; }\n  .kvc .kvc-head-logo { height: 36px; }\n  .kvc .kvc-head-word { display: none; }\n  .kvc .kvc-tab { padding: 7px 9px; }\n}\n@media (prefers-reduced-motion: reduce) {\n  .kvc .kvc-view, .kvc .kvc-dot, .kvc .kvc-bounce, .kvc .kvc-sheen { animation: none !important; }\n  .kvc .kvc-c3d { transition: none; }\n}\n@media print {\n  .kvc .kvc-head, .kvc .kvc-foot, .kvc .kvc-flipbar, .kvc .kvc-card-actions, .kvc .kvc-bg, .kvc .kvc-toast { display: none !important; }\n  .kvc { background: #FFFFFF; }\n}\n.kvc .kvc-head-co { font-size: 14px; font-weight: 800; color: var(--kvc-ink); white-space: nowrap; }\n@container (max-width: 400px) { .kvc .kvc-head-meta { display: none; } }\n.kvc .kvc-field small.kvc-field-err { color: var(--kvc-map); font-weight: 600; }\n.kvc .kvc-field small.kvc-field-err:empty { display: none; }\n.kvc .kvc-save > span:first-of-type { white-space: nowrap; }\n.kvc .kvc-save-chip { white-space: nowrap; }\n@container (max-width: 430px) { .kvc .kvc-save-chip { display: none; } .kvc .kvc-save { font-size: 14.5px; } }\n.kvc .kvc-dests { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }\n.kvc .kvc-dest { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 700;\n  color: var(--kvc-text-2); background: var(--kvc-tile); border: 1px solid var(--kvc-line); transition: all .15s; }\n.kvc .kvc-dest .kvc-i { font-size: 14px; color: var(--kvc-c); }\n.kvc .kvc-dest:hover { border-color: var(--kvc-c); }\n.kvc .kvc-dest.kvc-on { color: var(--kvc-on); background: var(--kvc-c); border-color: var(--kvc-c); }\n.kvc .kvc-dest.kvc-on .kvc-i { color: var(--kvc-on); }\n.kvc .kvc-field small.kvc-dest-hint { color: var(--kvc-primary); font-weight: 600; }\n.kvc.kvc-dark .kvc-field small.kvc-dest-hint { color: var(--kvc-accent); }\n.kvc .kvc-panel-qr { padding-top: 34px; }\n";
+  var CSS = "/* KIMOS vCard — interfaz de la tarjeta (Hub · Tarjeta 3D · Código QR).\n   Todo bajo .kvc. Los colores son tokens con nombre: marca FIGIT por\n   defecto y re-definibles por perfil (--kvc-primary/ink/soft/accent). */\n.kvc {\n  --kvc-primary: #0052FF;\n  --kvc-ink: #0D366B;\n  --kvc-soft: #DDF0FF;\n  --kvc-accent: #00D2FF;\n  --kvc-primary-2: color-mix(in srgb, var(--kvc-primary) 82%, #000);\n  --kvc-page: #F8FAFC;\n  --kvc-surface: #FFFFFF;\n  --kvc-head: rgba(255, 255, 255, .82);\n  --kvc-text: #0F172A;\n  --kvc-text-2: #334155;\n  --kvc-muted: #64748B;\n  --kvc-faint: #94A3B8;\n  --kvc-line: #E2E8F0;\n  --kvc-tile: #F8FAFC;\n  --kvc-pill: #F1F5F9;\n  --kvc-tint: #EDF5FF;\n  --kvc-wa: #10B981;\n  --kvc-wa-brand: #25D366;\n  --kvc-li: #0284C7;\n  --kvc-web: #4F46E5;\n  --kvc-ig: #DB2777;\n  --kvc-ig-1: #F59E0B;\n  --kvc-map: #E11D48;\n  --kvc-tel: #E53E3E;\n  --kvc-mail: var(--kvc-primary);\n  --kvc-on: #FFFFFF;\n  --kvc-shadow: 0 20px 45px -15px rgba(0, 36, 128, .14);\n  --kvc-glow: 0 0 25px -5px color-mix(in srgb, var(--kvc-primary) 50%, transparent);\n  position: relative;\n  min-height: 100%;\n  display: flex;\n  flex-direction: column;\n  overflow: hidden;\n  container-type: inline-size;\n  background: var(--kvc-page);\n  color: var(--kvc-text);\n  font-family: \"Plus Jakarta Sans\", Inter, -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif;\n  -webkit-font-smoothing: antialiased;\n  -webkit-tap-highlight-color: transparent;\n  line-height: 1.4;\n  transition: background .3s, color .3s;\n}\n.kvc.kvc-dark {\n  --kvc-page: #070C18;\n  --kvc-surface: #0D162B;\n  --kvc-head: rgba(8, 14, 30, .82);\n  --kvc-text: #F1F5F9;\n  --kvc-text-2: #CBD5E1;\n  --kvc-muted: #94A3B8;\n  --kvc-faint: #64748B;\n  --kvc-line: #1E293B;\n  --kvc-tile: rgba(30, 41, 59, .5);\n  --kvc-pill: rgba(30, 41, 59, .8);\n  --kvc-tint: rgba(7, 22, 73, .45);\n  --kvc-li: #38BDF8;\n  --kvc-web: #818CF8;\n  --kvc-ig: #F472B6;\n  --kvc-mail: var(--kvc-accent);\n  --kvc-shadow: 0 25px 50px -12px rgba(0, 0, 0, .55);\n}\n.kvc *, .kvc *::before, .kvc *::after { box-sizing: border-box; }\n.kvc [hidden] { display: none !important; }\n.kvc a { color: inherit; text-decoration: none; }\n.kvc button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; padding: 0; }\n.kvc .kvc-i { width: 1em; height: 1em; flex: none; display: block; }\n.kvc img { display: block; }\n\n/* Fondo: contornos y patrón de puntos */\n.kvc .kvc-bg { position: absolute; inset: 0; pointer-events: none; overflow: hidden; opacity: .4; z-index: 0;\n  background-image: radial-gradient(color-mix(in srgb, var(--kvc-primary) 8%, transparent) 1px, transparent 1px); background-size: 24px 24px; }\n.kvc.kvc-dark .kvc-bg { opacity: .25; }\n.kvc .kvc-bg-a { position: absolute; right: -144px; top: -144px; width: 650px; height: 650px; color: var(--kvc-primary); opacity: .2; }\n.kvc .kvc-bg-b { position: absolute; left: -192px; bottom: -192px; width: 700px; height: 700px; color: var(--kvc-accent); opacity: .25; }\n.kvc > *:not(.kvc-bg) { position: relative; z-index: 1; }\n\n/* ── Cabecera ─────────────────────────────────────────────────────────── */\n.kvc .kvc-head { position: sticky; top: 0; z-index: 40; background: var(--kvc-head); border-bottom: 1px solid var(--kvc-line);\n  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }\n.kvc.kvc-preview .kvc-head { position: relative; }\n.kvc .kvc-head-in { max-width: 896px; margin: 0 auto; padding: 0 16px; height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }\n.kvc .kvc-head-brand { display: flex; align-items: center; gap: 10px; min-width: 0; text-align: left; }\n.kvc .kvc-head-logo { height: 40px; display: flex; align-items: center; gap: 6px; background: #FFFFFF; padding: 4px 8px 4px 6px; border-radius: 10px; border: 1px solid var(--kvc-line); }\n.kvc .kvc-head-mark { height: 28px; width: auto; }\n.kvc .kvc-head-word { height: 13px; width: auto; }\n.kvc .kvc-head-meta { display: flex; flex-direction: column; gap: 2px; }\n.kvc .kvc-badge { align-self: flex-start; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; padding: 1px 6px; border-radius: 5px;\n  background: var(--kvc-tint); color: var(--kvc-primary); border: 1px solid color-mix(in srgb, var(--kvc-primary) 25%, transparent); }\n.kvc.kvc-dark .kvc-badge { color: var(--kvc-accent); }\n.kvc .kvc-head-sub { font-size: 10px; color: var(--kvc-muted); display: none; }\n.kvc .kvc-head-actions { display: flex; align-items: center; gap: 6px; }\n.kvc .kvc-tabs { display: flex; padding: 4px; gap: 2px; border-radius: 12px; background: var(--kvc-pill); border: 1px solid var(--kvc-line); }\n.kvc .kvc-tab { display: flex; align-items: center; gap: 6px; padding: 7px 10px; border-radius: 9px; font-size: 12px; font-weight: 600; color: var(--kvc-text-2); transition: all .2s; }\n.kvc .kvc-tab .kvc-i { font-size: 14px; }\n.kvc .kvc-tab:hover { color: var(--kvc-primary); }\n.kvc .kvc-tab.kvc-tab-on { color: var(--kvc-on); background: var(--kvc-primary); box-shadow: 0 2px 8px -2px color-mix(in srgb, var(--kvc-primary) 60%, transparent); }\n.kvc .kvc-tab-t { display: none; }\n.kvc .kvc-ibtn { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; font-size: 15px; background: var(--kvc-pill); border: 1px solid var(--kvc-line); color: var(--kvc-text-2); transition: color .2s; }\n.kvc .kvc-ibtn:hover { color: var(--kvc-primary); }\n\n/* ── Cuerpo y vistas ──────────────────────────────────────────────────── */\n.kvc .kvc-body { flex: 1; display: flex; align-items: flex-start; justify-content: center; padding: 24px 14px 32px; }\n.kvc .kvc-view { width: 100%; animation: kvc-in .45s cubic-bezier(.2, .8, .2, 1) both; }\n@keyframes kvc-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }\n.kvc .kvc-hub, .kvc .kvc-qrview { max-width: 448px; }\n.kvc .kvc-panel { position: relative; overflow: hidden; padding: 26px 22px 22px; border-radius: 24px; background: var(--kvc-surface); border: 1px solid var(--kvc-line); box-shadow: var(--kvc-shadow); }\n.kvc .kvc-panel-bar { position: absolute; inset: 0 0 auto 0; height: 6px; background: linear-gradient(90deg, var(--kvc-primary), var(--kvc-accent), var(--kvc-primary-2)); }\n\n/* Hub · perfil */\n.kvc .kvc-profile { display: flex; flex-direction: column; align-items: center; text-align: center; }\n.kvc .kvc-avatar { position: relative; margin-bottom: 16px; }\n.kvc .kvc-avatar-ring { width: 128px; height: 128px; border-radius: 50%; padding: 4px; box-shadow: var(--kvc-glow);\n  background: linear-gradient(45deg, var(--kvc-primary), var(--kvc-accent), var(--kvc-primary-2)); }\n.kvc .kvc-avatar-img, .kvc .kvc-avatar-ph { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; object-position: 50% 25%;\n  border: 2px solid var(--kvc-surface); background: #FFFFFF; }\n.kvc .kvc-avatar-ph { display: grid; place-items: center; font-size: 40px; font-weight: 800; color: var(--kvc-primary); }\n.kvc .kvc-verified { position: absolute; right: 6px; bottom: 4px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 12px;\n  color: var(--kvc-on); background: var(--kvc-primary); border: 2px solid var(--kvc-surface); box-shadow: 0 4px 10px -2px rgba(0, 0, 0, .25); }\n.kvc .kvc-name { margin: 0; font-size: 28px; line-height: 1.15; font-weight: 800; letter-spacing: -.02em; color: var(--kvc-text); }\n.kvc .kvc-role { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: 8px; }\n.kvc .kvc-role .kvc-title { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; border-radius: 999px; font-size: 12.5px;\n  background: var(--kvc-tint); border: 1px solid color-mix(in srgb, var(--kvc-primary) 22%, transparent); }\n.kvc .kvc-role .kvc-company { font-size: 13px; }\n.kvc .kvc-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--kvc-primary); animation: kvc-pulse 2s infinite; }\n@keyframes kvc-pulse { 50% { opacity: .45; } }\n.kvc .kvc-title { font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--kvc-primary-2); }\n.kvc.kvc-dark .kvc-title { color: var(--kvc-accent); }\n.kvc .kvc-sep { color: var(--kvc-faint); }\n.kvc .kvc-company { font-weight: 600; color: var(--kvc-text-2); }\n.kvc .kvc-tagline { margin: 12px 0 0; max-width: 320px; font-size: 13px; color: var(--kvc-muted); line-height: 1.6; }\n.kvc .kvc-save { width: 100%; margin-top: 20px; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 14px 18px; border-radius: 16px;\n  font-size: 14px; font-weight: 700; color: var(--kvc-on); background: linear-gradient(90deg, var(--kvc-primary), var(--kvc-primary-2)); box-shadow: var(--kvc-glow); transition: transform .15s, filter .2s; }\n.kvc .kvc-save:hover { filter: brightness(1.06); }\n.kvc .kvc-save:active { transform: scale(.98); }\n.kvc .kvc-save .kvc-i { font-size: 18px; }\n.kvc .kvc-bounce { animation: kvc-bounce 1.2s infinite; }\n@keyframes kvc-bounce { 0%, 100% { transform: translateY(-15%); animation-timing-function: cubic-bezier(.8, 0, 1, 1); } 50% { transform: none; animation-timing-function: cubic-bezier(0, 0, .2, 1); } }\n.kvc .kvc-save-chip { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: 2px 8px; border-radius: 999px; background: rgba(255, 255, 255, .2); }\n.kvc .kvc-pills { width: 100%; margin-top: 12px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }\n.kvc .kvc-pills-2 { grid-template-columns: 1.4fr 1fr; }\n.kvc .kvc-pills-1 { grid-template-columns: 1fr; }\n.kvc .kvc-pills-2 .kvc-pill, .kvc .kvc-pills-1 .kvc-pill { flex-direction: row; justify-content: center; gap: 8px; padding: 12px 10px; font-size: 13px; }\n.kvc .kvc-pill-wa { font-weight: 700; }\n/* Logo de la marca en las esquinas (Hub: arriba-izquierda · QR: arriba-derecha) */\n.kvc .kvc-corner-logo { position: absolute; z-index: 2; top: 16px; display: block; padding: 6px 7px; border-radius: 12px; background: #FFFFFF; border: 1px solid var(--kvc-line); box-shadow: 0 4px 12px -6px rgba(0, 0, 0, .18); }\n.kvc .kvc-corner-logo img { height: 46px; width: auto; }\n.kvc .kvc-corner-tl { left: 16px; }\n.kvc .kvc-corner-tr { right: 16px; }\n.kvc .kvc-pill { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 6px; border-radius: 12px; font-size: 11px; font-weight: 600;\n  background: var(--kvc-pill); border: 1px solid var(--kvc-line); color: var(--kvc-text-2); transition: background .2s, transform .15s; }\n.kvc .kvc-pill .kvc-i { font-size: 15px; color: var(--kvc-primary); transition: transform .2s; }\n.kvc .kvc-pill:hover .kvc-i { transform: scale(1.12); }\n.kvc .kvc-pill-wa { background: color-mix(in srgb, var(--kvc-wa) 9%, var(--kvc-surface)); border-color: color-mix(in srgb, var(--kvc-wa) 30%, transparent); color: color-mix(in srgb, var(--kvc-wa) 70%, var(--kvc-text)); }\n.kvc .kvc-pill-wa .kvc-i { color: var(--kvc-wa); font-size: 17px; }\n\n.kvc .kvc-divider { display: flex; align-items: center; gap: 12px; margin: 24px 0 14px; font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--kvc-faint); font-weight: 600; }\n.kvc .kvc-divider::before, .kvc .kvc-divider::after { content: \"\"; flex: 1; height: 1px; background: var(--kvc-line); }\n\n/* Hub · canales */\n.kvc .kvc-c-whatsapp { --kvc-c: var(--kvc-wa); }\n.kvc .kvc-c-email { --kvc-c: var(--kvc-mail); }\n.kvc .kvc-c-linkedin { --kvc-c: var(--kvc-li); }\n.kvc .kvc-c-website { --kvc-c: var(--kvc-web); }\n.kvc .kvc-c-instagram { --kvc-c: var(--kvc-ig); }\n.kvc .kvc-c-maps { --kvc-c: var(--kvc-map); }\n.kvc .kvc-c-phone { --kvc-c: var(--kvc-tel); }\n.kvc .kvc-c-qr { --kvc-c: var(--kvc-primary); }\n.kvc .kvc-hlist { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }\n.kvc .kvc-hl-txt small { font-variant-numeric: tabular-nums; letter-spacing: .01em; }\n.kvc .kvc-hl { display: flex; align-items: center; gap: 14px; padding: 13px 12px 13px 13px; border-radius: 16px; background: var(--kvc-tile); border: 1px solid var(--kvc-line);\n  transition: border-color .2s, background .2s, transform .15s; }\n.kvc .kvc-hl:hover { border-color: var(--kvc-c); background: color-mix(in srgb, var(--kvc-c) 6%, var(--kvc-tile)); }\n.kvc .kvc-hl:active { transform: scale(.99); }\n.kvc .kvc-hl-ic { width: 44px; height: 44px; border-radius: 12px; flex: none; display: grid; place-items: center; font-size: 20px; color: var(--kvc-c);\n  background: color-mix(in srgb, var(--kvc-c) 11%, transparent); box-shadow: 0 1px 2px rgba(0, 0, 0, .05); transition: all .2s; }\n.kvc .kvc-hl:hover .kvc-hl-ic { color: var(--kvc-on); background: var(--kvc-c); }\n.kvc .kvc-c-instagram:hover .kvc-hl-ic { background: linear-gradient(45deg, var(--kvc-ig-1), var(--kvc-ig)); }\n.kvc .kvc-hl-txt { display: flex; flex-direction: column; min-width: 0; flex: 1; }\n.kvc .kvc-hl-txt strong { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; color: var(--kvc-text); transition: color .2s; }\n.kvc .kvc-hl:hover .kvc-hl-txt strong { color: var(--kvc-c); }\n.kvc .kvc-hl-txt small { font-size: 12px; color: var(--kvc-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: \"Space Grotesk\", \"Plus Jakarta Sans\", Inter, -apple-system, \"Segoe UI\", Roboto, sans-serif; }\n.kvc .kvc-c-maps .kvc-hl-txt small { font-family: inherit; }\n.kvc .kvc-hl-go { width: 32px; height: 32px; flex: none; display: grid; place-items: center; font-size: 14px; color: var(--kvc-faint); transition: transform .2s, color .2s; }\n.kvc .kvc-hl:hover .kvc-hl-go { color: var(--kvc-c); transform: translateX(3px); }\n.kvc .kvc-hl-main { border-color: color-mix(in srgb, var(--kvc-wa) 45%, transparent); background: color-mix(in srgb, var(--kvc-wa) 7%, var(--kvc-tile)); }\n.kvc .kvc-hl-main .kvc-hl-ic { color: var(--kvc-on); background: linear-gradient(135deg, var(--kvc-wa-brand), var(--kvc-wa)); }\n.kvc .kvc-chip-main { font-style: normal; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; padding: 2px 7px; border-radius: 999px;\n  color: var(--kvc-on); background: var(--kvc-wa); }\n\n/* Hub · mini QR */\n.kvc .kvc-mini { margin-top: 22px; padding: 14px; border-radius: 16px; display: flex; align-items: center; gap: 13px;\n  background: linear-gradient(135deg, var(--kvc-tint), color-mix(in srgb, var(--kvc-soft) 60%, transparent)); border: 1px solid color-mix(in srgb, var(--kvc-primary) 20%, transparent); }\n.kvc .kvc-mini-qr { width: 58px; height: 58px; flex: none; padding: 4px; border-radius: 12px; background: #FFFFFF; border: 1px solid var(--kvc-line); box-shadow: 0 1px 3px rgba(0, 0, 0, .06); }\n.kvc .kvc-mini-txt { flex: 1; display: flex; flex-direction: column; min-width: 0; }\n.kvc .kvc-mini-txt strong { font-size: 12px; color: var(--kvc-text); }\n.kvc .kvc-mini-txt small { font-size: 11px; color: var(--kvc-muted); }\n.kvc .kvc-mini-btn { padding: 7px 12px; border-radius: 12px; font-size: 12px; font-weight: 700; color: var(--kvc-primary); background: var(--kvc-surface); border: 1px solid var(--kvc-line); box-shadow: 0 1px 3px rgba(0, 0, 0, .06); transition: transform .15s; }\n.kvc.kvc-dark .kvc-mini-btn { color: var(--kvc-accent); }\n.kvc .kvc-mini-btn:hover { transform: scale(1.05); }\n.kvc .kvc-powered { margin-top: 22px; text-align: center; font-size: 12px; color: var(--kvc-faint); display: grid; gap: 3px; }\n.kvc .kvc-powered strong { color: var(--kvc-primary); }\n.kvc.kvc-dark .kvc-powered strong { color: var(--kvc-accent); }\n.kvc .kvc-powered small { font-size: 10px; }\n.kvc .kvc-qr-slot svg { width: 100%; height: auto; display: block; }\n\n/* ── Tarjeta 3D ───────────────────────────────────────────────────────── */\n.kvc .kvc-cardview { max-width: 672px; display: flex; flex-direction: column; align-items: center; }\n.kvc .kvc-flipbar { width: 100%; max-width: 512px; display: flex; align-items: center; justify-content: space-between; margin: 0 0 16px; padding: 0 6px; font-size: 12px; color: var(--kvc-muted); font-weight: 500; }\n.kvc .kvc-flipbar > span { display: flex; align-items: center; gap: 6px; }\n.kvc .kvc-flipbar > span .kvc-i { color: var(--kvc-primary); }\n.kvc .kvc-btn-xs { display: flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 9px; font-size: 12px; font-weight: 700; color: var(--kvc-on); background: var(--kvc-primary); }\n.kvc .kvc-scene { width: 100%; max-width: 576px; height: 340px; perspective: 1200px; cursor: pointer; user-select: none; }\n.kvc .kvc-c3d { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform .7s cubic-bezier(.2, .7, .2, 1); border-radius: 24px; }\n.kvc .kvc-c3d.kvc-flipped { transform: rotateY(180deg); }\n.kvc .kvc-face { position: absolute; inset: 0; border-radius: 24px; overflow: hidden; -webkit-backface-visibility: hidden; backface-visibility: hidden;\n  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, .3); }\n.kvc .kvc-front { display: flex; background: #FFFFFF; border: 1px solid #E2E8F0; color: #1E293B; }\n.kvc .kvc-front-side { width: 36%; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: space-around; padding: 18px 12px;\n  background: var(--kvc-soft); border-right: 1px solid color-mix(in srgb, var(--kvc-soft) 80%, var(--kvc-primary)); }\n.kvc .kvc-front-avatar { width: 88px; height: 88px; border-radius: 50%; padding: 3px; background: linear-gradient(135deg, var(--kvc-primary), var(--kvc-accent)); box-shadow: 0 4px 10px -3px rgba(0, 0, 0, .25); }\n.kvc .kvc-front-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; object-position: 50% 25%; background: #FFFFFF; }\n.kvc .kvc-front-logo { position: absolute; top: 14px; right: 14px; background: #FFFFFF; padding: 4px 5px; border-radius: 9px; box-shadow: 0 1px 4px rgba(0, 0, 0, .1); border: 1px solid #EEF2F7; }\n.kvc .kvc-front-logo img { height: 46px; width: auto; }\n.kvc .kvc-front-qr { display: flex; flex-direction: column; align-items: center; gap: 4px; }\n.kvc .kvc-front-qrbox { width: 112px; height: 112px; padding: 5px; border-radius: 12px; background: #FFFFFF; border: 1px solid color-mix(in srgb, var(--kvc-primary) 25%, #FFFFFF); }\n.kvc .kvc-front-qr > span { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--kvc-primary); font-family: \"Space Grotesk\", \"Plus Jakarta Sans\", Inter, -apple-system, \"Segoe UI\", Roboto, sans-serif; }\n.kvc .kvc-front-main { position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 20px 20px 14px; }\n.kvc .kvc-front-head { padding-right: 52px; }\n.kvc .kvc-fr.kvc-c-whatsapp { --kvc-c: var(--kvc-wa); }\n.kvc .kvc-fr.kvc-c-whatsapp .kvc-fr-t { font-weight: 700; color: #0F7A55; }\n.kvc .kvc-front-name { margin: 0; font-size: 21px; font-weight: 900; letter-spacing: -.02em; color: var(--kvc-ink); line-height: 1.15; }\n.kvc .kvc-front-title { margin: 3px 0 0; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--kvc-primary); }\n.kvc .kvc-front-co { margin: 0; font-size: 12px; font-weight: 500; color: #64748B; }\n.kvc .kvc-front-rule { width: 80px; height: 4px; border-radius: 9px; margin: 10px 0 4px; background: linear-gradient(90deg, var(--kvc-primary), var(--kvc-accent)); }\n.kvc .kvc-front-rows { display: grid; gap: 5px; }\n.kvc .kvc-fr { display: flex; align-items: center; gap: 9px; font-size: 11.5px; color: #334155; min-width: 0; }\n.kvc .kvc-fr-ic { width: 18px; flex: none; display: grid; place-items: center; font-size: 13px; color: var(--kvc-c); }\n.kvc .kvc-fr.kvc-c-email { --kvc-c: #C084FC; }\n.kvc .kvc-fr.kvc-c-website { --kvc-c: #0EA5E9; }\n.kvc .kvc-fr.kvc-c-linkedin { --kvc-c: #0A66C2; }\n.kvc .kvc-fr-t { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }\n.kvc .kvc-fr.kvc-c-phone .kvc-fr-t { font-weight: 600; color: #1E293B; }\n.kvc .kvc-fr:hover .kvc-fr-t { color: var(--kvc-c); text-decoration: underline; text-underline-offset: 2px; }\n.kvc .kvc-front-foot { margin-top: 8px; padding-top: 7px; border-top: 1px solid #F1F5F9; display: flex; justify-content: space-between; gap: 8px; font-size: 9.5px; color: #94A3B8; }\n.kvc .kvc-front-foot span { font-family: \"Space Grotesk\", \"Plus Jakarta Sans\", Inter, -apple-system, \"Segoe UI\", Roboto, sans-serif; }\n.kvc .kvc-front-foot strong { color: var(--kvc-primary-2); }\n.kvc .kvc-back { transform: rotateY(180deg); display: flex; flex-direction: column; justify-content: space-between; padding: 24px 26px; color: #FFFFFF;\n  background: linear-gradient(135deg, #080E1E, #0D1B2A, #040813); border: 1px solid color-mix(in srgb, var(--kvc-primary) 40%, transparent); }\n.kvc .kvc-back-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }\n.kvc .kvc-chipset { display: flex; align-items: center; gap: 10px; color: #94A3B8; }\n.kvc .kvc-chip { width: 44px; height: 32px; border-radius: 6px; border: 1px solid #B45309;\n  background: linear-gradient(45deg, #D97706, #FCD34D, #F59E0B);\n  box-shadow: inset 0 0 0 4px rgba(251, 191, 36, .55), inset 22px 0 0 -21px rgba(180, 83, 9, .5), inset 0 16px 0 -15px rgba(180, 83, 9, .5); }\n.kvc .kvc-nfc { font-size: 18px; }\n.kvc .kvc-back-pass { display: flex; align-items: center; gap: 8px; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--kvc-accent); font-family: \"Space Grotesk\", \"Plus Jakarta Sans\", Inter, -apple-system, \"Segoe UI\", Roboto, sans-serif; }\n.kvc .kvc-live { width: 10px; height: 10px; border-radius: 50%; background: #34D399; box-shadow: 0 0 14px #34D399; }\n.kvc .kvc-back-mid { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; }\n.kvc .kvc-back-logo { background: #FFFFFF; padding: 10px 12px; border-radius: 16px; box-shadow: var(--kvc-glow); }\n.kvc .kvc-back-logo img { height: 74px; width: auto; }\n.kvc .kvc-back-mid p { margin: 0; max-width: 380px; font-size: 12px; color: #94A3B8; }\n.kvc .kvc-back-foot { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #1E293B; font-size: 12px; color: #64748B; font-family: \"Space Grotesk\", \"Plus Jakarta Sans\", Inter, -apple-system, \"Segoe UI\", Roboto, sans-serif; }\n.kvc .kvc-back-foot > span:last-child { display: flex; gap: 16px; }\n.kvc .kvc-back-foot strong { color: var(--kvc-accent); }\n.kvc .kvc-back-foot em { font-style: normal; }\n.kvc .kvc-sheen { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .5s;\n  background: linear-gradient(115deg, transparent 20%, rgba(255, 255, 255, .25) 40%, rgba(0, 210, 255, .12) 50%, transparent 65%); background-size: 250% 250%; }\n.kvc .kvc-scene:hover .kvc-sheen { opacity: 1; animation: kvc-sheen 2.4s ease infinite; }\n@keyframes kvc-sheen { 0% { background-position: 100% 0; } 100% { background-position: -50% 0; } }\n.kvc .kvc-card-actions { margin-top: 24px; display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }\n\n/* Botones genéricos */\n.kvc .kvc-btn-s { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 18px; border-radius: 12px; font-size: 12px; font-weight: 700;\n  background: var(--kvc-surface); border: 1px solid var(--kvc-line); color: var(--kvc-text-2); transition: background .2s, transform .15s; }\n.kvc .kvc-btn-s:hover { background: var(--kvc-pill); }\n.kvc .kvc-btn-s:active { transform: scale(.98); }\n.kvc .kvc-btn-s-primary { color: var(--kvc-on); background: var(--kvc-primary); border-color: transparent; box-shadow: var(--kvc-glow); }\n.kvc .kvc-btn-s-primary:hover { background: var(--kvc-primary-2); }\n\n/* ── Código QR ────────────────────────────────────────────────────────── */\n.kvc .kvc-panel-qr { text-align: center; padding: 28px 24px; }\n.kvc .kvc-kicker { display: inline-flex; align-items: center; gap: 7px; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 700;\n  color: var(--kvc-primary-2); background: var(--kvc-tint); border: 1px solid color-mix(in srgb, var(--kvc-primary) 22%, transparent); }\n.kvc.kvc-dark .kvc-kicker { color: var(--kvc-accent); }\n.kvc .kvc-qr-title { margin: 12px 0 0; font-size: 24px; font-weight: 900; color: var(--kvc-text); }\n.kvc .kvc-qr-sub { margin: 4px 0 22px; font-size: 12px; color: var(--kvc-muted); }\n.kvc .kvc-qr-frame { display: inline-block; padding: 18px; border-radius: 24px; background: linear-gradient(45deg, var(--kvc-primary), var(--kvc-accent), var(--kvc-primary-2)); box-shadow: var(--kvc-glow); margin-bottom: 22px; }\n.kvc .kvc-qr-white { padding: 12px; border-radius: 16px; background: #FFFFFF; box-shadow: inset 0 2px 4px rgba(0, 0, 0, .06); }\n.kvc .kvc-qr-big { width: 220px; }\n.kvc .kvc-field { text-align: left; margin-bottom: 18px; }\n.kvc .kvc-field label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 12px; font-weight: 700; color: var(--kvc-text-2); }\n.kvc .kvc-field label em { font-style: normal; font-size: 10px; color: var(--kvc-primary); font-family: \"Space Grotesk\", \"Plus Jakarta Sans\", Inter, -apple-system, \"Segoe UI\", Roboto, sans-serif; }\n.kvc .kvc-field small { display: block; margin-top: 5px; font-size: 10px; color: var(--kvc-faint); }\n.kvc .kvc-field-row { position: relative; }\n.kvc .kvc-input { width: 100%; padding: 10px 70px 10px 13px; border-radius: 12px; font-size: 12px; color: var(--kvc-text); background: var(--kvc-tile); border: 1px solid var(--kvc-line); outline: none; }\n.kvc .kvc-input:focus { box-shadow: 0 0 0 2px var(--kvc-primary); }\n.kvc .kvc-mono { font-family: \"Space Grotesk\", \"Plus Jakarta Sans\", Inter, -apple-system, \"Segoe UI\", Roboto, sans-serif; }\n.kvc .kvc-reset { position: absolute; right: 7px; top: 7px; padding: 4px 8px; border-radius: 6px; font-size: 10px; background: var(--kvc-line); color: var(--kvc-text-2); }\n.kvc .kvc-qr-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }\n.kvc .kvc-qr-actions .kvc-btn-s { padding: 13px 10px; }\n\n/* ── Pie ──────────────────────────────────────────────────────────────── */\n.kvc .kvc-foot { border-top: 1px solid var(--kvc-line); padding: 16px; font-size: 12px; color: var(--kvc-faint); }\n.kvc .kvc-foot-in { max-width: 896px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }\n.kvc .kvc-foot-in p { margin: 0; }\n.kvc .kvc-foot-links { display: flex; align-items: center; gap: 12px; color: var(--kvc-muted); }\n.kvc .kvc-foot-links a:hover, .kvc .kvc-foot-links button:hover { color: var(--kvc-primary); }\n\n/* ── Modales y avisos ─────────────────────────────────────────────────── */\n.kvc .kvc-backdrop { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; background: rgba(2, 6, 23, .55); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); animation: kvc-fade .2s both; }\n.kvc.kvc-preview .kvc-backdrop { position: absolute; }\n@keyframes kvc-fade { from { opacity: 0; } }\n.kvc .kvc-modal { position: relative; width: 100%; max-width: 400px; max-height: 90vh; overflow: auto; padding: 24px 20px 20px; border-radius: 22px; background: var(--kvc-surface); border: 1px solid var(--kvc-line); box-shadow: var(--kvc-shadow); }\n.kvc .kvc-modal-x { position: absolute; right: 12px; top: 10px; width: 32px; height: 32px; border-radius: 10px; font-size: 22px; line-height: 1; color: var(--kvc-muted); }\n.kvc .kvc-modal-t { margin: 0 0 4px; font-size: 18px; font-weight: 800; color: var(--kvc-text); }\n.kvc .kvc-modal-s { margin: 0 0 16px; font-size: 12px; color: var(--kvc-muted); }\n.kvc .kvc-share-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }\n.kvc .kvc-share-opt { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 4px; border-radius: 14px; font-size: 11px; font-weight: 600; background: var(--kvc-tile); border: 1px solid var(--kvc-line); color: var(--kvc-text-2); }\n.kvc .kvc-share-ic { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; font-size: 19px; color: var(--kvc-on); background: var(--kvc-c); }\n.kvc .kvc-copy { display: flex; gap: 8px; }\n.kvc .kvc-copy .kvc-input { padding-right: 12px; }\n.kvc .kvc-pre { margin: 12px 0 14px; padding: 12px; border-radius: 12px; max-height: 260px; overflow: auto; font-size: 11px; line-height: 1.5; white-space: pre-wrap; word-break: break-all;\n  background: var(--kvc-tile); border: 1px solid var(--kvc-line); color: var(--kvc-text-2); font-family: ui-monospace, \"SF Mono\", Menlo, monospace; }\n.kvc .kvc-modal-actions { display: flex; gap: 10px; }\n.kvc .kvc-toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 40px); opacity: 0; pointer-events: none; z-index: 70;\n  max-width: calc(100% - 32px); padding: 12px 18px; border-radius: 12px; font-size: 12px; font-weight: 600; background: #0F172A; color: #FFFFFF; box-shadow: 0 20px 40px -10px rgba(0, 0, 0, .45); transition: all .3s; }\n.kvc .kvc-toast.kvc-on { opacity: 1; transform: translate(-50%, 0); }\n.kvc.kvc-preview .kvc-toast { position: absolute; }\n\n/* ── Ajustes por ancho ────────────────────────────────────────────────── */\n@container (min-width: 640px) {\n  .kvc .kvc-head-in { padding: 0 24px; }\n  .kvc .kvc-head-sub { display: block; }\n  .kvc .kvc-tab-t { display: inline; }\n  .kvc .kvc-tab { padding: 7px 12px; }\n  .kvc .kvc-body { padding: 40px 16px; align-items: center; }\n  .kvc .kvc-panel { padding: 28px; }\n  .kvc .kvc-name { font-size: 30px; }\n  .kvc .kvc-tagline { font-size: 14px; }\n  .kvc .kvc-scene { height: 350px; }\n  .kvc .kvc-front-side { width: 33.3%; padding: 20px; }\n  .kvc .kvc-front-avatar { width: 96px; height: 96px; }\n  .kvc .kvc-front-qrbox { width: 128px; height: 128px; }\n  .kvc .kvc-front-logo img { height: 56px; }\n  .kvc .kvc-front-head { padding-right: 64px; }\n  .kvc .kvc-front-main { padding: 26px 28px 16px; }\n  .kvc .kvc-front-name { font-size: 25px; }\n  .kvc .kvc-front-title { font-size: 14px; }\n  .kvc .kvc-fr { font-size: 13px; }\n  .kvc .kvc-foot-in { flex-direction: row; justify-content: space-between; text-align: left; }\n}\n@container (max-width: 400px) {\n  .kvc .kvc-scene { height: 300px; }\n  .kvc .kvc-front-side { padding: 12px 8px; }\n  .kvc .kvc-front-avatar { width: 68px; height: 68px; }\n  .kvc .kvc-front-logo img { height: 32px; }\n  .kvc .kvc-front-qrbox { width: 92px; height: 92px; }\n  .kvc .kvc-front-logo { top: 10px; right: 10px; padding: 3px; }\n  .kvc .kvc-front-logo img { height: 36px; }\n  .kvc .kvc-front-head { padding-right: 40px; }\n  .kvc .kvc-corner-logo img { height: 36px; }\n  .kvc .kvc-front-main { padding: 14px 12px 10px; }\n  .kvc .kvc-front-name { font-size: 17px; }\n  .kvc .kvc-front-title, .kvc .kvc-front-co { font-size: 10px; }\n  .kvc .kvc-fr { font-size: 10px; gap: 6px; }\n  .kvc .kvc-front-foot { font-size: 8px; }\n  .kvc .kvc-back { padding: 18px; }\n  .kvc .kvc-back-logo img { height: 56px; }\n  .kvc .kvc-head-logo { height: 36px; }\n  .kvc .kvc-head-word { display: none; }\n  .kvc .kvc-tab { padding: 7px 9px; }\n}\n@media (prefers-reduced-motion: reduce) {\n  .kvc .kvc-view, .kvc .kvc-dot, .kvc .kvc-bounce, .kvc .kvc-sheen { animation: none !important; }\n  .kvc .kvc-c3d { transition: none; }\n}\n@media print {\n  .kvc .kvc-head, .kvc .kvc-foot, .kvc .kvc-flipbar, .kvc .kvc-card-actions, .kvc .kvc-bg, .kvc .kvc-toast { display: none !important; }\n  .kvc { background: #FFFFFF; }\n}\n.kvc .kvc-head-co { font-size: 14px; font-weight: 800; color: var(--kvc-ink); white-space: nowrap; }\n@container (max-width: 400px) { .kvc .kvc-head-meta { display: none; } }\n.kvc .kvc-field small.kvc-field-err { color: var(--kvc-map); font-weight: 600; }\n.kvc .kvc-field small.kvc-field-err:empty { display: none; }\n.kvc .kvc-save > span:first-of-type { white-space: nowrap; }\n.kvc .kvc-save-chip { white-space: nowrap; }\n@container (max-width: 430px) { .kvc .kvc-save-chip { display: none; } .kvc .kvc-save { font-size: 14.5px; } }\n.kvc .kvc-dests { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }\n.kvc .kvc-dest { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 700;\n  color: var(--kvc-text-2); background: var(--kvc-tile); border: 1px solid var(--kvc-line); transition: all .15s; }\n.kvc .kvc-dest .kvc-i { font-size: 14px; color: var(--kvc-c); }\n.kvc .kvc-dest:hover { border-color: var(--kvc-c); }\n.kvc .kvc-dest.kvc-on { color: var(--kvc-on); background: var(--kvc-c); border-color: var(--kvc-c); }\n.kvc .kvc-dest.kvc-on .kvc-i { color: var(--kvc-on); }\n.kvc .kvc-field small.kvc-dest-hint { color: var(--kvc-primary); font-weight: 600; }\n.kvc.kvc-dark .kvc-field small.kvc-dest-hint { color: var(--kvc-accent); }\n.kvc .kvc-panel-qr { padding-top: 34px; }\n/* ── v1.2: idioma ── */\n.kvc .kvc-lang { width: auto; min-width: 36px; padding: 0 8px; font-size: 11.5px; font-weight: 800; letter-spacing: .06em; }\n/* ── v1.2: «Déjame tus datos» ── */\n.kvc .kvc-lead { margin-top: 4px; }\n.kvc .kvc-lead-intro { margin: -4px 0 12px; text-align: center; font-size: 12.5px; color: var(--kvc-muted); }\n.kvc .kvc-lead-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }\n.kvc .kvc-lead-f { display: grid; gap: 4px; min-width: 0; }\n.kvc .kvc-lead-f > span { font-size: 11px; font-weight: 700; color: var(--kvc-text-2); }\n.kvc .kvc-lead-wide, .kvc .kvc-lead-send, .kvc .kvc-lead-msg { grid-column: 1 / -1; }\n.kvc .kvc-lead-in { padding: 10px 12px; font-size: 14px; font-family: inherit; resize: vertical; }\n.kvc .kvc-hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }\n.kvc .kvc-lead-send { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 13px 16px; border-radius: 14px; font-size: 14px; font-weight: 700;\n  color: var(--kvc-on); background: linear-gradient(90deg, var(--kvc-primary), var(--kvc-primary-2)); box-shadow: var(--kvc-glow); }\n.kvc .kvc-lead-send .kvc-i { font-size: 17px; }\n.kvc .kvc-lead-send:disabled { opacity: .6; cursor: default; }\n.kvc .kvc-lead-wa { background: linear-gradient(135deg, var(--kvc-wa-brand), var(--kvc-wa)); box-shadow: 0 12px 24px -14px var(--kvc-wa); }\n.kvc .kvc-lead-msg { margin: 0; min-height: 1em; font-size: 12.5px; font-weight: 600; color: var(--kvc-muted); text-align: center; }\n.kvc .kvc-lead-msg:empty { display: none; }\n.kvc .kvc-lead-err { color: var(--kvc-map); }\n.kvc .kvc-lead-ok { color: var(--kvc-wa); }\n.kvc .kvc-lead-thanks { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 18px; border-radius: 16px; text-align: center;\n  background: color-mix(in srgb, var(--kvc-wa) 8%, var(--kvc-tile)); border: 1px solid color-mix(in srgb, var(--kvc-wa) 35%, transparent); }\n.kvc .kvc-lead-thanks .kvc-lead-ok { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-size: 20px; color: var(--kvc-on); background: var(--kvc-wa); }\n@container (max-width: 400px) { .kvc .kvc-lead-form { grid-template-columns: 1fr; } }\n";
   function injectCss(doc) {
     doc = doc || document;
     if (doc.getElementById('kvc-card-css')) return;
@@ -3085,6 +3336,10 @@ var qrcode = function() {
 
   return {
     DEFAULT_PROFILE: DEFAULT_PROFILE,
+    EMPTY_PROFILE: EMPTY_PROFILE,
+    vcardLite: vcardLite,
+    localize: localize,
+    tr: tr,
     normalize: normalize,
     links: links,
     channels: channels,
@@ -3111,6 +3366,7 @@ const TABS = [
   { id: 'canales', label: 'Canales' },
   { id: 'marca', label: 'Marca' },
   { id: 'publicar', label: 'Publicar' },
+  { id: 'prospectos', label: 'Prospectos' },
 ];
 
 /* ── Marca de la empresa (shell.brands) → tarjeta ──────────────────────
@@ -3230,7 +3486,8 @@ export default function mount(shell) {
   let model = { profile: KVC.normalize(KVC.DEFAULT_PROFILE), published: false, publishedAt: '', loaded: false };
   let ui = { tab: 'perfil', device: 'mobile', busy: '', error: '' };
   const listeners = new Set();
-  const emit = () => listeners.forEach((l) => l({ model, ui }));
+  let leads = { list: [], loaded: false, error: '' };
+  const emit = () => listeners.forEach((l) => l({ model, ui, leads }));
   let saveT = null;
   let pubT = null;
   let disposed = false;
@@ -3283,44 +3540,81 @@ export default function mount(shell) {
 
   /* Instancia nueva en OTRA empresa: la tarjeta nace con la persona conectada
      (/api/identity/me) y con la marca por defecto del tenant, no con FIGIT. */
-  async function seedNewInstance() {
-    let me = null;
-    try {
-      const req = typeof shell.authFetch === 'function' ? shell.authFetch : null;
-      if (req) {
-        const res = await req('/api/identity/me', { cache: 'no-store' });
-        if (res.ok) me = await res.json();
-      }
-    } catch (e) { /* opcional */ }
-    const email = String((me && me.email) || '').toLowerCase();
-    const fold = (x) => String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim();
+  /* Persona conectada (/api/identity/me), una sola lectura. */
+  let mePromise = null;
+  function fetchMe() {
+    if (!mePromise) {
+      mePromise = (async () => {
+        try {
+          if (typeof shell.authFetch !== 'function') return null;
+          const res = await shell.authFetch('/api/identity/me', { cache: 'no-store' });
+          return res.ok ? await res.json() : null;
+        } catch (e) { return null; }
+      })();
+    }
+    return mePromise;
+  }
+  const fold = (x) => String(x || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim();
+  /* ¿La persona conectada es la del perfil de fábrica (Bryan · FIGIT.ai)? */
+  function isOwner(me) {
+    if (!me) return false;
     const def = KVC.DEFAULT_PROFILE;
-    // ¿Es la persona del perfil de fábrica (Bryan · FIGIT.ai)? Entonces su
-    // tarjeta FIGIT se queda tal cual: ni se reemplaza por el perfil de KIMOS
-    // (cargo «Administrador…», sin teléfono) ni se re-marca con la marca del tenant.
-    const meName = fold(me && (me.displayName || me.name));
-    const isOwner = email === def.email || (meName && fold(def.name).indexOf(meName.split(' ').slice(0, 2).join(' ')) === 0);
-    if (isOwner) return;
-    if (email) {
-      const name = String(me.displayName || me.name || email);
-      const phone = String(me.phone || '');
-      const first = name.split(' ')[0];
-      updateProfile({
-        name, firstName: first, lastName: name.split(' ').slice(1).join(' '),
-        title: String(me.description || ''), email, phone, whatsapp: phone.replace(/\D/g, ''),
-        tagline: '', website: '', motto: '',
-        whatsappMsg: 'Hola ' + first + ', te contacto desde tu tarjeta digital.',
-        photo: String(me.photoUrl || ''), linkedin: '', instagram: '', address: '', city: '', region: '',
-        location: String(me.location || ''), cardId: '', hashtag: '', publicUrl: '',
-      });
+    const email = String(me.email || '').toLowerCase();
+    const meName = fold(me.displayName || me.name);
+    return email === def.email || (!!meName && fold(def.name).indexOf(meName.split(' ').slice(0, 2).join(' ')) === 0);
+  }
+  /* Datos personales desde la identidad de KIMOS (o vacíos). */
+  function personFromMe(me) {
+    if (!me) return {};
+    const name = String(me.displayName || me.name || '').trim();
+    const phone = String(me.phone || '');
+    const first = name.split(' ')[0] || '';
+    return {
+      name, firstName: first, lastName: name.split(' ').slice(1).join(' '),
+      title: String(me.description || ''), email: String(me.email || '').toLowerCase(), phone, whatsapp: phone.replace(/\D/g, ''),
+      whatsappMsg: first ? 'Hola ' + first + ', te contacto desde tu tarjeta digital.' : '',
+      whatsappMsgEn: first ? 'Hi ' + first + ", I'm reaching out from your digital card." : '',
+      photo: String(me.photoUrl || ''), location: String(me.location || ''),
+    };
+  }
+  /* La identidad visual de FIGIT de fábrica, sin los datos personales de Bryan. */
+  function figitBranding() {
+    const d = KVC.DEFAULT_PROFILE;
+    return { company: d.company, website: d.website, instagram: d.instagram, logo: d.logo, logoMark: d.logoMark, logoWord: d.logoWord,
+      motto: d.motto, mottoEn: d.mottoEn, theme: d.theme, hashtag: d.hashtag, brandId: '', brandName: 'FIGIT.ai' };
+  }
+
+  /* ── Plantillas (v1.2) ──
+     · «FIGIT · Bryan (fábrica)»: la tarjeta original completa.
+     · «En blanco»: solo la persona conectada.
+     · Una por cada marca del registro de KIMOS: persona conectada + esa marca.
+     Se conserva siempre el dominio propio (publicUrl). */
+  async function buildTemplate(kind, brand) {
+    const keep = { publicUrl: model.profile.publicUrl, leadForm: model.profile.leadForm };
+    if (kind === 'figit') return KVC.normalize(Object.assign({}, KVC.DEFAULT_PROFILE, keep));
+    const me = await fetchMe();
+    let p = Object.assign({}, KVC.EMPTY_PROFILE, personFromMe(me), keep);
+    if (kind === 'brand' && brand) {
+      if (/figit/i.test(brand.name || '') && !brandToPatch(brand)) p = Object.assign(p, figitBranding());
+      else p = Object.assign(p, brandToPatch(brand) || {});
     }
+    return KVC.normalize(p);
+  }
+
+  /* Instancia nueva: el dueño recibe su tarjeta FIGIT; cualquier otra persona
+     recibe una tarjeta en blanco con SUS datos y la marca de su empresa. Los
+     datos de Bryan nunca aparecen en la tarjeta de otra persona. */
+  async function seedNewInstance() {
+    const me = await fetchMe();
+    if (isOwner(me)) return;
+    let p = Object.assign({}, KVC.EMPTY_PROFILE, personFromMe(me));
+    let cur = null;
     if (shell.brands && shell.brands.current) {
-      try {
-        const cur = await shell.brands.current();
-        // FIGIT ya viene de fábrica: solo se aplica una marca distinta.
-        if (cur && !/figit/i.test(cur.name || '')) applyBrand(cur, true);
-      } catch (e) { /* tenant sin marca: se queda la paleta por defecto */ }
+      try { cur = await shell.brands.current(); } catch (e) { cur = null; }
     }
+    if (cur && /figit/i.test(cur.name || '')) p = Object.assign(p, figitBranding(), brandToPatch(cur) ? { theme: brandToPatch(cur).theme } : {});
+    else if (cur && brandToPatch(cur)) p = Object.assign(p, brandToPatch(cur));
+    commit({ profile: KVC.normalize(p) });
   }
 
   async function load() {
@@ -3400,10 +3694,11 @@ export default function mount(shell) {
       kind: 'definition',
       public: {
         enabled: !!enabled,
-        channels: [],
+        // «Déjame tus datos»: el gateway acepta envíos solo en el canal 'lead'.
+        channels: model.profile.leadForm === 'on' ? ['lead'] : [],
         // Lo que ve el mundo: SOLO la tarjeta. Es información de contacto
         // pensada para compartirse; nada más de la instancia sale de aquí.
-        data: enabled ? { profile: model.profile, app: APP_ID, version: APP_VERSION } : {},
+        data: enabled ? { profile: model.profile, leads: model.profile.leadForm === 'on', app: APP_ID, version: APP_VERSION } : {},
       },
     };
     try {
@@ -3419,6 +3714,56 @@ export default function mount(shell) {
       return false;
     }
   }
+
+  /* ── Prospectos (v1.2) ──
+     Lo que envían desde «Déjame tus datos» llega por el gateway como item
+     (kind 'submission', channel 'lead'). Aquí se listan, se contactan y se
+     pasan a Clientes con shell.records (identidad compartida, sin duplicar). */
+  async function loadLeads() {
+    if (!instanceId || !shell.items || disposed) return;
+    try {
+      const all = await shell.items.list();
+      const list = (all || [])
+        .filter((it) => it && it.id !== 'definition' && (it.kind || '') === 'submission' && it.channel === 'lead')
+        .map((it) => Object.assign({}, it, { data: it.data || {} }))
+        .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+      const sig = JSON.stringify(list.map((l) => [l.id, l.status, l.recordRef || '']));
+      if (sig !== leads.sig || !leads.loaded) { leads = { list, loaded: true, error: '', sig }; emit(); }
+    } catch (e) {
+      leads = Object.assign({}, leads, { loaded: true, error: 'No se pudieron leer los prospectos: ' + String((e && e.message) || e) });
+      emit();
+    }
+  }
+  async function setLeadStatus(lead, patch) {
+    try {
+      await shell.items.update(lead.id, Object.assign({ updatedAt: new Date().toISOString() }, patch));
+      await loadLeads();
+    } catch (e) { shell.notify({ level: 'error', text: 'No se pudo actualizar: ' + String((e && e.message) || e) }); }
+  }
+  async function convertLead(lead) {
+    const d = lead.data || {};
+    if (!shell.records || !shell.records.findOrCreate) {
+      shell.notify({ level: 'warn', text: 'Este KIMOS no tiene el registro de clientes compartido: copia los datos a mano.' });
+      return;
+    }
+    const keys = {};
+    if (d.email) keys.email = d.email;
+    if (d.phone) keys.phone = d.phone;
+    try {
+      const r = await shell.records.findOrCreate('contact', { keys, label: d.name || d.email || d.phone });
+      if (r.warning) shell.notify({ level: 'warn', text: r.warning });
+      try {
+        await shell.records.link(r.ref, { instanceId, itemId: lead.id, kind: 'prospecto', label: (d.name || '') + (d.company ? ' · ' + d.company : '') });
+      } catch (e) { /* el enlace es índice inverso: el contacto ya existe */ }
+      await setLeadStatus(lead, { status: 'converted', recordRef: r.ref, convertedAt: new Date().toISOString() });
+      shell.notify({ level: 'success', text: (r.created ? 'Contacto creado: ' : 'Ya existía; quedó enlazado: ') + (d.name || '') });
+    } catch (e) {
+      shell.notify({ level: 'error', text: 'No se pudo pasar a Clientes: ' + String((e && e.message) || e) });
+    }
+  }
+  const leadsTimer = setInterval(() => {
+    if (typeof document === 'undefined' || document.visibilityState !== 'hidden') void loadLeads();
+  }, 30000);
 
   async function exportHtml() {
     setUi({ busy: 'export' });
@@ -3458,6 +3803,7 @@ export default function mount(shell) {
       tools: [
         { name: 'GET_CARD', description: 'Devuelve los datos de la tarjeta, si está publicada y el enlace del QR.', inputSchema: { type: 'object', properties: {} } },
         { name: 'UPDATE_CARD', description: 'Actualiza campos de la tarjeta. Solo se cambian los campos enviados. whatsapp va en dígitos con código de país (56987161097).', inputSchema: { type: 'object', properties: props } },
+        { name: 'LIST_LEADS', description: 'Lista los prospectos que dejaron sus datos en la tarjeta (nombre, empresa, correo, teléfono, mensaje, estado).', inputSchema: { type: 'object', properties: {} } },
         { name: 'SET_PUBLISHED', description: 'Publica (true) o despublica (false) la página pública que abre el QR.', inputSchema: { type: 'object', properties: { published: { type: 'boolean' } }, required: ['published'] } },
       ],
       getSnapshot: () => ({
@@ -3475,6 +3821,10 @@ export default function mount(shell) {
           if (!Object.keys(patch).length) return { success: false, error: 'No llegó ningún campo editable.' };
           updateProfile(patch);
           return { success: true, message: 'Tarjeta actualizada: ' + Object.keys(patch).join(', ') };
+        }
+        if (t === 'LIST_LEADS') {
+          await loadLeads();
+          return { success: true, message: JSON.stringify(leads.list.slice(0, 50).map((l) => Object.assign({ id: l.id, status: l.status || 'new', at: l.createdAt }, l.data))) };
         }
         if (t === 'SET_PUBLISHED') {
           const ok = await publish(pl.published === true);
@@ -3495,6 +3845,7 @@ export default function mount(shell) {
   KVC.injectCss();
   void load();
   void loadBrands();
+  void loadLeads();
 
   /* ── Componentes ── */
   function Field(props) {
@@ -3545,14 +3896,14 @@ export default function mount(shell) {
       h('span', null, label));
   }
 
-  function Preview({ profile, qrUrl, device }) {
+  function Preview({ profile, qrUrl, device, leads: leadsOn }) {
     const ref = useRef(null);
-    const key = useMemo(() => JSON.stringify(profile) + '|' + qrUrl, [profile, qrUrl]);
+    const key = useMemo(() => JSON.stringify(profile) + '|' + qrUrl + '|' + leadsOn, [profile, qrUrl, leadsOn]);
     useEffect(() => {
       if (!ref.current) return undefined;
       let inst = null;
       const t = setTimeout(() => {
-        inst = KVC.mount(ref.current, profile, { preview: true, storage: false, resolve: resolveAsset, qrUrl });
+        inst = KVC.mount(ref.current, profile, { preview: true, storage: false, resolve: resolveAsset, qrUrl, leadEndpoint: leadsOn ? 'preview' : '' });
       }, 180);
       return () => { clearTimeout(t); if (inst) inst.destroy(); };
     }, [key]);
@@ -3611,7 +3962,12 @@ export default function mount(shell) {
         help: 'Si alojas la tarjeta en tu dominio (con «Exportar HTML»), el QR apunta ahí. Vacío = enlace público de KIMOS' + (kurl ? '.' : ' (requiere documento).') }),
       h('div', { className: 'kvcx-row kvcx-wrap' },
         h('button', { type: 'button', className: 'kvcx-btn', disabled: ui.busy === 'export', onClick: exportHtml }, ui.busy === 'export' ? 'Exportando…' : 'Exportar HTML autónomo'),
-        h('button', { type: 'button', className: 'kvcx-btn', onClick: () => KVC.saveVcf(m.profile, resolveAsset) }, 'Descargar contacto .vcf')));
+        h('button', { type: 'button', className: 'kvcx-btn', onClick: () => KVC.saveVcf(m.profile, resolveAsset) }, 'Descargar contacto .vcf'),
+        h('button', { type: 'button', className: 'kvcx-btn', title: 'Un QR que guarda tu contacto aunque no haya señal', onClick: () => {
+          KVC.qrPng(KVC.vcardLite(m.profile), { dark: m.profile.theme.ink, px: 1400, ec: 'M' })
+            .then((b) => KVC.download('QR_sin_internet_' + KVC.slug(m.profile.name) + '.png', b))
+            .catch(() => shell.notify({ level: 'error', text: 'No se pudo generar el QR sin internet' }));
+        } }, 'QR sin internet (PNG)')));
   }
 
   function BrandPicker({ p }) {
@@ -3646,20 +4002,79 @@ export default function mount(shell) {
         p.brandName ? h('small', { className: 'kvcx-help' }, 'Aplicada: ' + p.brandName) : null));
   }
 
+  const newLeads = (l) => (l && l.list ? l.list.filter((x) => (x.status || 'new') === 'new').length : 0);
+
+  function TemplatePicker() {
+    const [busy, setBusy] = useState('');
+    const apply = async (kind, brand, label) => {
+      if (typeof confirm === 'function' && !confirm('¿Reemplazar la tarjeta actual por la plantilla «' + label + '»? El enlace público se mantiene.')) return;
+      setBusy(label);
+      try { commit({ profile: await buildTemplate(kind, brand) }); shell.notify({ level: 'success', text: 'Plantilla aplicada: ' + label }); }
+      finally { setBusy(''); }
+    };
+    const opts = [
+      { kind: 'figit', label: 'FIGIT · Bryan Valdes (fábrica)', sub: 'La tarjeta original completa.' },
+      { kind: 'blank', label: 'En blanco', sub: 'Solo tus datos de KIMOS, sin marca.' },
+    ].concat((brands.list || []).map((b) => ({ kind: 'brand', brand: b, label: 'Marca: ' + (b.name || 'sin nombre'), sub: 'Tus datos con los colores y logos de esta marca.' })));
+    return h('div', { className: 'kvcx-preset' },
+      h('div', null,
+        h('strong', null, 'Plantillas'),
+        h('small', null, 'Empieza desde una tarjeta lista. Cada empresa tiene la suya, tomada del registro de marcas de KIMOS.')),
+      h('div', { className: 'kvcx-tpls' }, opts.map((o) =>
+        h('button', { key: o.label, type: 'button', className: 'kvcx-tpl', disabled: !!busy, onClick: () => apply(o.kind, o.brand, o.label) },
+          h('strong', null, busy === o.label ? 'Aplicando…' : o.label), h('small', null, o.sub)))));
+  }
+
+  function LeadsPane({ l, m }) {
+    useEffect(() => { void loadLeads(); }, []);
+    const [filter, setFilter] = useState('open');
+    if (!instanceId) return h('p', { className: 'kvcx-warn' }, 'Abre la app como documento para recibir prospectos.');
+    const list = (l.list || []).filter((x) => (filter === 'open' ? (x.status || 'new') !== 'archived' : (x.status || 'new') === 'archived'));
+    const fmt = (iso) => { try { return new Date(iso).toLocaleString('es-CL', { dateStyle: 'medium', timeStyle: 'short' }); } catch (e) { return iso || ''; } };
+    return h('div', { className: 'kvcx-pane' },
+      m.profile.leadForm !== 'on' ? h('p', { className: 'kvcx-warn' }, 'El formulario está apagado (pestaña Canales): nadie puede dejarte sus datos.') : null,
+      m.profile.leadForm === 'on' && !m.published ? h('p', { className: 'kvcx-warn' }, 'Publica la tarjeta para que el formulario reciba prospectos.') : null,
+      h('div', { className: 'kvcx-row kvcx-wrap' },
+        h('div', { className: 'kvcx-seg' },
+          h('button', { type: 'button', className: filter === 'open' ? 'kvcx-on' : '', onClick: () => setFilter('open') }, 'Activos'),
+          h('button', { type: 'button', className: filter === 'archived' ? 'kvcx-on' : '', onClick: () => setFilter('archived') }, 'Archivados')),
+        h('button', { type: 'button', className: 'kvcx-btn kvcx-btn-ghost', onClick: loadLeads }, 'Actualizar')),
+      l.error ? h('p', { className: 'kvcx-warn' }, l.error) : null,
+      !l.loaded ? h('p', { className: 'kvcx-help' }, 'Cargando prospectos…') :
+      list.length === 0 ? h('div', { className: 'kvcx-empty' },
+        h('strong', null, filter === 'open' ? 'Aún no hay prospectos' : 'No hay archivados'),
+        h('small', null, 'Cuando alguien escanee tu QR y complete «Déjame tus datos», aparecerá aquí con su nombre, empresa y forma de contacto.')) :
+      h('div', { className: 'kvcx-leads' }, list.map((x) => {
+        const d = x.data || {};
+        const st = x.status || 'new';
+        const wa = String(d.phone || '').replace(/\D/g, '');
+        return h('article', { key: x.id, className: 'kvcx-lead kvcx-lead-' + st },
+          h('div', { className: 'kvcx-lead-h' },
+            h('strong', null, d.name || '(sin nombre)'),
+            h('span', { className: 'kvcx-lead-st' }, st === 'new' ? 'Nuevo' : st === 'converted' ? 'En Clientes' : st === 'contacted' ? 'Contactado' : 'Archivado')),
+          d.company ? h('div', { className: 'kvcx-lead-co' }, d.company) : null,
+          h('div', { className: 'kvcx-lead-meta' },
+            d.email ? h('span', null, d.email) : null,
+            d.phone ? h('span', null, d.phone) : null,
+            h('span', null, fmt(x.createdAt)), d.lang === 'en' ? h('span', null, 'EN') : null),
+          d.message ? h('p', { className: 'kvcx-lead-msg' }, d.message) : null,
+          h('div', { className: 'kvcx-row kvcx-wrap' },
+            wa ? h('a', { className: 'kvcx-btn kvcx-btn-primary', href: 'https://wa.me/' + wa + '?text=' + encodeURIComponent('Hola ' + String(d.name || '').split(' ')[0] + ', soy ' + m.profile.name + ' de ' + m.profile.company + '. Gracias por dejarme tus datos.'), target: '_blank', rel: 'noopener noreferrer', onClick: () => st === 'new' && setLeadStatus(x, { status: 'contacted' }) }, 'WhatsApp') : null,
+            d.email ? h('a', { className: 'kvcx-btn', href: 'mailto:' + d.email + '?subject=' + encodeURIComponent(m.profile.company + ' · ' + m.profile.name), onClick: () => st === 'new' && setLeadStatus(x, { status: 'contacted' }) }, 'Correo') : null,
+            st !== 'converted' ? h('button', { type: 'button', className: 'kvcx-btn', onClick: () => convertLead(x) }, 'Pasar a Clientes') : null,
+            st !== 'archived'
+              ? h('button', { type: 'button', className: 'kvcx-btn kvcx-btn-ghost', onClick: () => setLeadStatus(x, { status: 'archived' }) }, 'Archivar')
+              : h('button', { type: 'button', className: 'kvcx-btn kvcx-btn-ghost', onClick: () => setLeadStatus(x, { status: 'new' }) }, 'Restaurar')));
+      })));
+  }
+
   function Component() {
-    const [st, setSt] = useState({ model, ui });
+    const [st, setSt] = useState({ model, ui, leads });
     useEffect(() => { listeners.add(setSt); return () => listeners.delete(setSt); }, []);
     const m = st.model, u = st.ui, p = m.profile;
     const pane = {
       perfil: h('div', { className: 'kvcx-pane' },
-        h('div', { className: 'kvcx-preset' },
-          h('div', null,
-            h('strong', null, 'Tarjeta de fábrica: Bryan Valdes Ch. · FIGIT.ai'),
-            h('small', null, 'Restaura foto, cargo, canales, logos y colores FIGIT. El enlace público se mantiene.')),
-          h('button', { type: 'button', className: 'kvcx-btn', onClick: () => {
-            if (typeof confirm === 'function' && !confirm('¿Reemplazar los datos actuales por la tarjeta FIGIT de fábrica?')) return;
-            commit({ profile: KVC.normalize(Object.assign({}, KVC.DEFAULT_PROFILE, { publicUrl: model.profile.publicUrl })) });
-          } }, 'Restaurar')),
+        h(TemplatePicker, null),
         !p.whatsapp ? h('p', { className: 'kvcx-warn' }, 'Falta tu WhatsApp (pestaña Canales): es el canal principal de la tarjeta.') : null,
         h(ImageField, { label: 'Foto de perfil', k: 'photo', kind: 'photo', profile: p }),
         h('div', { className: 'kvcx-grid' },
@@ -3668,12 +4083,23 @@ export default function mount(shell) {
           h(Field, { label: 'Apellidos', k: 'lastName', profile: p }),
           h(Field, { label: 'Cargo', k: 'title', profile: p }),
           h(Field, { label: 'Empresa', k: 'company', profile: p }),
-          h(Field, { label: 'Frase', k: 'tagline', profile: p, area: true, wide: true }))),
+          h(Field, { label: 'Frase', k: 'tagline', profile: p, area: true, wide: true })),
+        h('div', { className: 'kvcx-sub' }, 'English · tarjeta en inglés'),
+        h('div', { className: 'kvcx-grid' },
+          h(Field, { label: 'Cargo (inglés)', k: 'titleEn', profile: p, placeholder: 'CEO · Founder' }),
+          h(Field, { label: 'Lema del reverso (inglés)', k: 'mottoEn', profile: p }),
+          h(Field, { label: 'Frase (inglés)', k: 'taglineEn', profile: p, area: true, wide: true,
+            help: 'Quien abre la tarjeta con el teléfono en inglés la ve en inglés; el botón EN/ES la cambia. Vacío = se usa el texto en español.' }))),
       canales: h('div', { className: 'kvcx-pane' },
         h('div', { className: 'kvcx-grid' },
           h(Field, { label: 'WhatsApp · canal principal', k: 'whatsapp', profile: p, placeholder: '56987161097', type: 'tel', help: 'Con código de país, solo dígitos. Vacío = el del teléfono.' }),
           h(Field, { label: 'Teléfono visible', k: 'phone', profile: p, placeholder: '+56 9 8716 1097', type: 'tel' }),
           h(Field, { label: 'Mensaje inicial de WhatsApp', k: 'whatsappMsg', profile: p, area: true, wide: true }),
+          h(Field, { label: 'Mensaje inicial de WhatsApp (inglés)', k: 'whatsappMsgEn', profile: p, area: true, wide: true }),
+          h('label', { className: 'kvcx-check kvcx-wide' },
+            h('input', { type: 'checkbox', checked: p.leadForm === 'on', onChange: (e) => updateProfile({ leadForm: e.target.checked ? 'on' : 'off' }) }),
+            h('span', null, h('strong', null, 'Formulario «Déjame tus datos»'),
+              h('small', null, 'Quien escanea puede dejarte nombre, empresa, correo y teléfono. Llegan a la pestaña Prospectos.'))),
           h(Field, { label: 'Correo', k: 'email', profile: p, type: 'email' }),
           h(Field, { label: 'Sitio web', k: 'website', profile: p, type: 'url' }),
           h(Field, { label: 'LinkedIn', k: 'linkedin', profile: p, type: 'url' }),
@@ -3700,6 +4126,7 @@ export default function mount(shell) {
           h(Field, { label: 'Hashtag', k: 'hashtag', profile: p }),
           h(Field, { label: 'Tipografía', k: 'font', profile: p, help: 'Familia de la marca (si está instalada en el equipo).' }))),
       publicar: h(PublishPane, { m }),
+      prospectos: h(LeadsPane, { l: st.leads, m }),
     }[u.tab];
 
     return h('div', { className: 'kimos-vcard' },
@@ -3709,7 +4136,9 @@ export default function mount(shell) {
           h('span', { className: 'kvcx-ver', title: 'KIMOS vCard v' + APP_VERSION }, 'v' + APP_VERSION),
           m.published ? h('span', { className: 'kvcx-pill-ok' }, '● Publicada') : null),
         h('nav', { className: 'kvcx-tabs' }, TABS.map((t) =>
-          h('button', { key: t.id, type: 'button', className: 'kvcx-tab' + (u.tab === t.id ? ' kvcx-tab-on' : ''), onClick: () => setUi({ tab: t.id }) }, t.label))),
+          h('button', { key: t.id, type: 'button', className: 'kvcx-tab' + (u.tab === t.id ? ' kvcx-tab-on' : ''), onClick: () => { setUi({ tab: t.id }); if (t.id === 'prospectos') void loadLeads(); } },
+            t.label,
+            t.id === 'prospectos' && newLeads(st.leads) ? h('span', { className: 'kvcx-badge' }, newLeads(st.leads)) : null))),
         h('div', { className: 'kvcx-actions' },
           h('div', { className: 'kvcx-seg' },
             h('button', { type: 'button', className: u.device === 'mobile' ? 'kvcx-on' : '', onClick: () => setUi({ device: 'mobile' }) }, 'Móvil'),
@@ -3719,7 +4148,7 @@ export default function mount(shell) {
         h('section', { className: 'kvcx-editor' }, m.loaded ? pane : h('p', { className: 'kvcx-help' }, 'Cargando…')),
         h('section', { className: 'kvcx-preview' },
           h('div', { className: 'kvcx-preview-k' }, 'Así la verá quien escanee tu QR'),
-          m.loaded ? h(Preview, { profile: p, qrUrl: qrTarget(), device: u.device }) : null)));
+          m.loaded ? h(Preview, { profile: p, qrUrl: qrTarget(), device: u.device, leads: m.published }) : null)));
   }
 
   return {
@@ -3728,6 +4157,7 @@ export default function mount(shell) {
       disposed = true;
       clearTimeout(saveT);
       clearTimeout(pubT);
+      clearInterval(leadsTimer);
       listeners.clear();
       if (typeof agentOff === 'function') agentOff();
     },

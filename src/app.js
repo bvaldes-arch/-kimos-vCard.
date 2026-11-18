@@ -23,6 +23,7 @@ const TABS = [
   { id: 'canales', label: 'Canales' },
   { id: 'marca', label: 'Marca' },
   { id: 'publicar', label: 'Publicar' },
+  { id: 'prospectos', label: 'Prospectos' },
 ];
 
 /* ── Marca de la empresa (shell.brands) → tarjeta ──────────────────────
@@ -142,7 +143,8 @@ export default function mount(shell) {
   let model = { profile: KVC.normalize(KVC.DEFAULT_PROFILE), published: false, publishedAt: '', loaded: false };
   let ui = { tab: 'perfil', device: 'mobile', busy: '', error: '' };
   const listeners = new Set();
-  const emit = () => listeners.forEach((l) => l({ model, ui }));
+  let leads = { list: [], loaded: false, error: '' };
+  const emit = () => listeners.forEach((l) => l({ model, ui, leads }));
   let saveT = null;
   let pubT = null;
   let disposed = false;
@@ -195,44 +197,81 @@ export default function mount(shell) {
 
   /* Instancia nueva en OTRA empresa: la tarjeta nace con la persona conectada
      (/api/identity/me) y con la marca por defecto del tenant, no con FIGIT. */
-  async function seedNewInstance() {
-    let me = null;
-    try {
-      const req = typeof shell.authFetch === 'function' ? shell.authFetch : null;
-      if (req) {
-        const res = await req('/api/identity/me', { cache: 'no-store' });
-        if (res.ok) me = await res.json();
-      }
-    } catch (e) { /* opcional */ }
-    const email = String((me && me.email) || '').toLowerCase();
-    const fold = (x) => String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim();
+  /* Persona conectada (/api/identity/me), una sola lectura. */
+  let mePromise = null;
+  function fetchMe() {
+    if (!mePromise) {
+      mePromise = (async () => {
+        try {
+          if (typeof shell.authFetch !== 'function') return null;
+          const res = await shell.authFetch('/api/identity/me', { cache: 'no-store' });
+          return res.ok ? await res.json() : null;
+        } catch (e) { return null; }
+      })();
+    }
+    return mePromise;
+  }
+  const fold = (x) => String(x || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim();
+  /* ¿La persona conectada es la del perfil de fábrica (Bryan · FIGIT.ai)? */
+  function isOwner(me) {
+    if (!me) return false;
     const def = KVC.DEFAULT_PROFILE;
-    // ¿Es la persona del perfil de fábrica (Bryan · FIGIT.ai)? Entonces su
-    // tarjeta FIGIT se queda tal cual: ni se reemplaza por el perfil de KIMOS
-    // (cargo «Administrador…», sin teléfono) ni se re-marca con la marca del tenant.
-    const meName = fold(me && (me.displayName || me.name));
-    const isOwner = email === def.email || (meName && fold(def.name).indexOf(meName.split(' ').slice(0, 2).join(' ')) === 0);
-    if (isOwner) return;
-    if (email) {
-      const name = String(me.displayName || me.name || email);
-      const phone = String(me.phone || '');
-      const first = name.split(' ')[0];
-      updateProfile({
-        name, firstName: first, lastName: name.split(' ').slice(1).join(' '),
-        title: String(me.description || ''), email, phone, whatsapp: phone.replace(/\D/g, ''),
-        tagline: '', website: '', motto: '',
-        whatsappMsg: 'Hola ' + first + ', te contacto desde tu tarjeta digital.',
-        photo: String(me.photoUrl || ''), linkedin: '', instagram: '', address: '', city: '', region: '',
-        location: String(me.location || ''), cardId: '', hashtag: '', publicUrl: '',
-      });
+    const email = String(me.email || '').toLowerCase();
+    const meName = fold(me.displayName || me.name);
+    return email === def.email || (!!meName && fold(def.name).indexOf(meName.split(' ').slice(0, 2).join(' ')) === 0);
+  }
+  /* Datos personales desde la identidad de KIMOS (o vacíos). */
+  function personFromMe(me) {
+    if (!me) return {};
+    const name = String(me.displayName || me.name || '').trim();
+    const phone = String(me.phone || '');
+    const first = name.split(' ')[0] || '';
+    return {
+      name, firstName: first, lastName: name.split(' ').slice(1).join(' '),
+      title: String(me.description || ''), email: String(me.email || '').toLowerCase(), phone, whatsapp: phone.replace(/\D/g, ''),
+      whatsappMsg: first ? 'Hola ' + first + ', te contacto desde tu tarjeta digital.' : '',
+      whatsappMsgEn: first ? 'Hi ' + first + ", I'm reaching out from your digital card." : '',
+      photo: String(me.photoUrl || ''), location: String(me.location || ''),
+    };
+  }
+  /* La identidad visual de FIGIT de fábrica, sin los datos personales de Bryan. */
+  function figitBranding() {
+    const d = KVC.DEFAULT_PROFILE;
+    return { company: d.company, website: d.website, instagram: d.instagram, logo: d.logo, logoMark: d.logoMark, logoWord: d.logoWord,
+      motto: d.motto, mottoEn: d.mottoEn, theme: d.theme, hashtag: d.hashtag, brandId: '', brandName: 'FIGIT.ai' };
+  }
+
+  /* ── Plantillas (v1.2) ──
+     · «FIGIT · Bryan (fábrica)»: la tarjeta original completa.
+     · «En blanco»: solo la persona conectada.
+     · Una por cada marca del registro de KIMOS: persona conectada + esa marca.
+     Se conserva siempre el dominio propio (publicUrl). */
+  async function buildTemplate(kind, brand) {
+    const keep = { publicUrl: model.profile.publicUrl, leadForm: model.profile.leadForm };
+    if (kind === 'figit') return KVC.normalize(Object.assign({}, KVC.DEFAULT_PROFILE, keep));
+    const me = await fetchMe();
+    let p = Object.assign({}, KVC.EMPTY_PROFILE, personFromMe(me), keep);
+    if (kind === 'brand' && brand) {
+      if (/figit/i.test(brand.name || '') && !brandToPatch(brand)) p = Object.assign(p, figitBranding());
+      else p = Object.assign(p, brandToPatch(brand) || {});
     }
+    return KVC.normalize(p);
+  }
+
+  /* Instancia nueva: el dueño recibe su tarjeta FIGIT; cualquier otra persona
+     recibe una tarjeta en blanco con SUS datos y la marca de su empresa. Los
+     datos de Bryan nunca aparecen en la tarjeta de otra persona. */
+  async function seedNewInstance() {
+    const me = await fetchMe();
+    if (isOwner(me)) return;
+    let p = Object.assign({}, KVC.EMPTY_PROFILE, personFromMe(me));
+    let cur = null;
     if (shell.brands && shell.brands.current) {
-      try {
-        const cur = await shell.brands.current();
-        // FIGIT ya viene de fábrica: solo se aplica una marca distinta.
-        if (cur && !/figit/i.test(cur.name || '')) applyBrand(cur, true);
-      } catch (e) { /* tenant sin marca: se queda la paleta por defecto */ }
+      try { cur = await shell.brands.current(); } catch (e) { cur = null; }
     }
+    if (cur && /figit/i.test(cur.name || '')) p = Object.assign(p, figitBranding(), brandToPatch(cur) ? { theme: brandToPatch(cur).theme } : {});
+    else if (cur && brandToPatch(cur)) p = Object.assign(p, brandToPatch(cur));
+    commit({ profile: KVC.normalize(p) });
   }
 
   async function load() {
@@ -312,10 +351,11 @@ export default function mount(shell) {
       kind: 'definition',
       public: {
         enabled: !!enabled,
-        channels: [],
+        // «Déjame tus datos»: el gateway acepta envíos solo en el canal 'lead'.
+        channels: model.profile.leadForm === 'on' ? ['lead'] : [],
         // Lo que ve el mundo: SOLO la tarjeta. Es información de contacto
         // pensada para compartirse; nada más de la instancia sale de aquí.
-        data: enabled ? { profile: model.profile, app: APP_ID, version: APP_VERSION } : {},
+        data: enabled ? { profile: model.profile, leads: model.profile.leadForm === 'on', app: APP_ID, version: APP_VERSION } : {},
       },
     };
     try {
@@ -331,6 +371,56 @@ export default function mount(shell) {
       return false;
     }
   }
+
+  /* ── Prospectos (v1.2) ──
+     Lo que envían desde «Déjame tus datos» llega por el gateway como item
+     (kind 'submission', channel 'lead'). Aquí se listan, se contactan y se
+     pasan a Clientes con shell.records (identidad compartida, sin duplicar). */
+  async function loadLeads() {
+    if (!instanceId || !shell.items || disposed) return;
+    try {
+      const all = await shell.items.list();
+      const list = (all || [])
+        .filter((it) => it && it.id !== 'definition' && (it.kind || '') === 'submission' && it.channel === 'lead')
+        .map((it) => Object.assign({}, it, { data: it.data || {} }))
+        .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+      const sig = JSON.stringify(list.map((l) => [l.id, l.status, l.recordRef || '']));
+      if (sig !== leads.sig || !leads.loaded) { leads = { list, loaded: true, error: '', sig }; emit(); }
+    } catch (e) {
+      leads = Object.assign({}, leads, { loaded: true, error: 'No se pudieron leer los prospectos: ' + String((e && e.message) || e) });
+      emit();
+    }
+  }
+  async function setLeadStatus(lead, patch) {
+    try {
+      await shell.items.update(lead.id, Object.assign({ updatedAt: new Date().toISOString() }, patch));
+      await loadLeads();
+    } catch (e) { shell.notify({ level: 'error', text: 'No se pudo actualizar: ' + String((e && e.message) || e) }); }
+  }
+  async function convertLead(lead) {
+    const d = lead.data || {};
+    if (!shell.records || !shell.records.findOrCreate) {
+      shell.notify({ level: 'warn', text: 'Este KIMOS no tiene el registro de clientes compartido: copia los datos a mano.' });
+      return;
+    }
+    const keys = {};
+    if (d.email) keys.email = d.email;
+    if (d.phone) keys.phone = d.phone;
+    try {
+      const r = await shell.records.findOrCreate('contact', { keys, label: d.name || d.email || d.phone });
+      if (r.warning) shell.notify({ level: 'warn', text: r.warning });
+      try {
+        await shell.records.link(r.ref, { instanceId, itemId: lead.id, kind: 'prospecto', label: (d.name || '') + (d.company ? ' · ' + d.company : '') });
+      } catch (e) { /* el enlace es índice inverso: el contacto ya existe */ }
+      await setLeadStatus(lead, { status: 'converted', recordRef: r.ref, convertedAt: new Date().toISOString() });
+      shell.notify({ level: 'success', text: (r.created ? 'Contacto creado: ' : 'Ya existía; quedó enlazado: ') + (d.name || '') });
+    } catch (e) {
+      shell.notify({ level: 'error', text: 'No se pudo pasar a Clientes: ' + String((e && e.message) || e) });
+    }
+  }
+  const leadsTimer = setInterval(() => {
+    if (typeof document === 'undefined' || document.visibilityState !== 'hidden') void loadLeads();
+  }, 30000);
 
   async function exportHtml() {
     setUi({ busy: 'export' });
@@ -370,6 +460,7 @@ export default function mount(shell) {
       tools: [
         { name: 'GET_CARD', description: 'Devuelve los datos de la tarjeta, si está publicada y el enlace del QR.', inputSchema: { type: 'object', properties: {} } },
         { name: 'UPDATE_CARD', description: 'Actualiza campos de la tarjeta. Solo se cambian los campos enviados. whatsapp va en dígitos con código de país (56987161097).', inputSchema: { type: 'object', properties: props } },
+        { name: 'LIST_LEADS', description: 'Lista los prospectos que dejaron sus datos en la tarjeta (nombre, empresa, correo, teléfono, mensaje, estado).', inputSchema: { type: 'object', properties: {} } },
         { name: 'SET_PUBLISHED', description: 'Publica (true) o despublica (false) la página pública que abre el QR.', inputSchema: { type: 'object', properties: { published: { type: 'boolean' } }, required: ['published'] } },
       ],
       getSnapshot: () => ({
@@ -387,6 +478,10 @@ export default function mount(shell) {
           if (!Object.keys(patch).length) return { success: false, error: 'No llegó ningún campo editable.' };
           updateProfile(patch);
           return { success: true, message: 'Tarjeta actualizada: ' + Object.keys(patch).join(', ') };
+        }
+        if (t === 'LIST_LEADS') {
+          await loadLeads();
+          return { success: true, message: JSON.stringify(leads.list.slice(0, 50).map((l) => Object.assign({ id: l.id, status: l.status || 'new', at: l.createdAt }, l.data))) };
         }
         if (t === 'SET_PUBLISHED') {
           const ok = await publish(pl.published === true);
@@ -407,6 +502,7 @@ export default function mount(shell) {
   KVC.injectCss();
   void load();
   void loadBrands();
+  void loadLeads();
 
   /* ── Componentes ── */
   function Field(props) {
@@ -457,14 +553,14 @@ export default function mount(shell) {
       h('span', null, label));
   }
 
-  function Preview({ profile, qrUrl, device }) {
+  function Preview({ profile, qrUrl, device, leads: leadsOn }) {
     const ref = useRef(null);
-    const key = useMemo(() => JSON.stringify(profile) + '|' + qrUrl, [profile, qrUrl]);
+    const key = useMemo(() => JSON.stringify(profile) + '|' + qrUrl + '|' + leadsOn, [profile, qrUrl, leadsOn]);
     useEffect(() => {
       if (!ref.current) return undefined;
       let inst = null;
       const t = setTimeout(() => {
-        inst = KVC.mount(ref.current, profile, { preview: true, storage: false, resolve: resolveAsset, qrUrl });
+        inst = KVC.mount(ref.current, profile, { preview: true, storage: false, resolve: resolveAsset, qrUrl, leadEndpoint: leadsOn ? 'preview' : '' });
       }, 180);
       return () => { clearTimeout(t); if (inst) inst.destroy(); };
     }, [key]);
@@ -523,7 +619,12 @@ export default function mount(shell) {
         help: 'Si alojas la tarjeta en tu dominio (con «Exportar HTML»), el QR apunta ahí. Vacío = enlace público de KIMOS' + (kurl ? '.' : ' (requiere documento).') }),
       h('div', { className: 'kvcx-row kvcx-wrap' },
         h('button', { type: 'button', className: 'kvcx-btn', disabled: ui.busy === 'export', onClick: exportHtml }, ui.busy === 'export' ? 'Exportando…' : 'Exportar HTML autónomo'),
-        h('button', { type: 'button', className: 'kvcx-btn', onClick: () => KVC.saveVcf(m.profile, resolveAsset) }, 'Descargar contacto .vcf')));
+        h('button', { type: 'button', className: 'kvcx-btn', onClick: () => KVC.saveVcf(m.profile, resolveAsset) }, 'Descargar contacto .vcf'),
+        h('button', { type: 'button', className: 'kvcx-btn', title: 'Un QR que guarda tu contacto aunque no haya señal', onClick: () => {
+          KVC.qrPng(KVC.vcardLite(m.profile), { dark: m.profile.theme.ink, px: 1400, ec: 'M' })
+            .then((b) => KVC.download('QR_sin_internet_' + KVC.slug(m.profile.name) + '.png', b))
+            .catch(() => shell.notify({ level: 'error', text: 'No se pudo generar el QR sin internet' }));
+        } }, 'QR sin internet (PNG)')));
   }
 
   function BrandPicker({ p }) {
@@ -558,20 +659,79 @@ export default function mount(shell) {
         p.brandName ? h('small', { className: 'kvcx-help' }, 'Aplicada: ' + p.brandName) : null));
   }
 
+  const newLeads = (l) => (l && l.list ? l.list.filter((x) => (x.status || 'new') === 'new').length : 0);
+
+  function TemplatePicker() {
+    const [busy, setBusy] = useState('');
+    const apply = async (kind, brand, label) => {
+      if (typeof confirm === 'function' && !confirm('¿Reemplazar la tarjeta actual por la plantilla «' + label + '»? El enlace público se mantiene.')) return;
+      setBusy(label);
+      try { commit({ profile: await buildTemplate(kind, brand) }); shell.notify({ level: 'success', text: 'Plantilla aplicada: ' + label }); }
+      finally { setBusy(''); }
+    };
+    const opts = [
+      { kind: 'figit', label: 'FIGIT · Bryan Valdes (fábrica)', sub: 'La tarjeta original completa.' },
+      { kind: 'blank', label: 'En blanco', sub: 'Solo tus datos de KIMOS, sin marca.' },
+    ].concat((brands.list || []).map((b) => ({ kind: 'brand', brand: b, label: 'Marca: ' + (b.name || 'sin nombre'), sub: 'Tus datos con los colores y logos de esta marca.' })));
+    return h('div', { className: 'kvcx-preset' },
+      h('div', null,
+        h('strong', null, 'Plantillas'),
+        h('small', null, 'Empieza desde una tarjeta lista. Cada empresa tiene la suya, tomada del registro de marcas de KIMOS.')),
+      h('div', { className: 'kvcx-tpls' }, opts.map((o) =>
+        h('button', { key: o.label, type: 'button', className: 'kvcx-tpl', disabled: !!busy, onClick: () => apply(o.kind, o.brand, o.label) },
+          h('strong', null, busy === o.label ? 'Aplicando…' : o.label), h('small', null, o.sub)))));
+  }
+
+  function LeadsPane({ l, m }) {
+    useEffect(() => { void loadLeads(); }, []);
+    const [filter, setFilter] = useState('open');
+    if (!instanceId) return h('p', { className: 'kvcx-warn' }, 'Abre la app como documento para recibir prospectos.');
+    const list = (l.list || []).filter((x) => (filter === 'open' ? (x.status || 'new') !== 'archived' : (x.status || 'new') === 'archived'));
+    const fmt = (iso) => { try { return new Date(iso).toLocaleString('es-CL', { dateStyle: 'medium', timeStyle: 'short' }); } catch (e) { return iso || ''; } };
+    return h('div', { className: 'kvcx-pane' },
+      m.profile.leadForm !== 'on' ? h('p', { className: 'kvcx-warn' }, 'El formulario está apagado (pestaña Canales): nadie puede dejarte sus datos.') : null,
+      m.profile.leadForm === 'on' && !m.published ? h('p', { className: 'kvcx-warn' }, 'Publica la tarjeta para que el formulario reciba prospectos.') : null,
+      h('div', { className: 'kvcx-row kvcx-wrap' },
+        h('div', { className: 'kvcx-seg' },
+          h('button', { type: 'button', className: filter === 'open' ? 'kvcx-on' : '', onClick: () => setFilter('open') }, 'Activos'),
+          h('button', { type: 'button', className: filter === 'archived' ? 'kvcx-on' : '', onClick: () => setFilter('archived') }, 'Archivados')),
+        h('button', { type: 'button', className: 'kvcx-btn kvcx-btn-ghost', onClick: loadLeads }, 'Actualizar')),
+      l.error ? h('p', { className: 'kvcx-warn' }, l.error) : null,
+      !l.loaded ? h('p', { className: 'kvcx-help' }, 'Cargando prospectos…') :
+      list.length === 0 ? h('div', { className: 'kvcx-empty' },
+        h('strong', null, filter === 'open' ? 'Aún no hay prospectos' : 'No hay archivados'),
+        h('small', null, 'Cuando alguien escanee tu QR y complete «Déjame tus datos», aparecerá aquí con su nombre, empresa y forma de contacto.')) :
+      h('div', { className: 'kvcx-leads' }, list.map((x) => {
+        const d = x.data || {};
+        const st = x.status || 'new';
+        const wa = String(d.phone || '').replace(/\D/g, '');
+        return h('article', { key: x.id, className: 'kvcx-lead kvcx-lead-' + st },
+          h('div', { className: 'kvcx-lead-h' },
+            h('strong', null, d.name || '(sin nombre)'),
+            h('span', { className: 'kvcx-lead-st' }, st === 'new' ? 'Nuevo' : st === 'converted' ? 'En Clientes' : st === 'contacted' ? 'Contactado' : 'Archivado')),
+          d.company ? h('div', { className: 'kvcx-lead-co' }, d.company) : null,
+          h('div', { className: 'kvcx-lead-meta' },
+            d.email ? h('span', null, d.email) : null,
+            d.phone ? h('span', null, d.phone) : null,
+            h('span', null, fmt(x.createdAt)), d.lang === 'en' ? h('span', null, 'EN') : null),
+          d.message ? h('p', { className: 'kvcx-lead-msg' }, d.message) : null,
+          h('div', { className: 'kvcx-row kvcx-wrap' },
+            wa ? h('a', { className: 'kvcx-btn kvcx-btn-primary', href: 'https://wa.me/' + wa + '?text=' + encodeURIComponent('Hola ' + String(d.name || '').split(' ')[0] + ', soy ' + m.profile.name + ' de ' + m.profile.company + '. Gracias por dejarme tus datos.'), target: '_blank', rel: 'noopener noreferrer', onClick: () => st === 'new' && setLeadStatus(x, { status: 'contacted' }) }, 'WhatsApp') : null,
+            d.email ? h('a', { className: 'kvcx-btn', href: 'mailto:' + d.email + '?subject=' + encodeURIComponent(m.profile.company + ' · ' + m.profile.name), onClick: () => st === 'new' && setLeadStatus(x, { status: 'contacted' }) }, 'Correo') : null,
+            st !== 'converted' ? h('button', { type: 'button', className: 'kvcx-btn', onClick: () => convertLead(x) }, 'Pasar a Clientes') : null,
+            st !== 'archived'
+              ? h('button', { type: 'button', className: 'kvcx-btn kvcx-btn-ghost', onClick: () => setLeadStatus(x, { status: 'archived' }) }, 'Archivar')
+              : h('button', { type: 'button', className: 'kvcx-btn kvcx-btn-ghost', onClick: () => setLeadStatus(x, { status: 'new' }) }, 'Restaurar')));
+      })));
+  }
+
   function Component() {
-    const [st, setSt] = useState({ model, ui });
+    const [st, setSt] = useState({ model, ui, leads });
     useEffect(() => { listeners.add(setSt); return () => listeners.delete(setSt); }, []);
     const m = st.model, u = st.ui, p = m.profile;
     const pane = {
       perfil: h('div', { className: 'kvcx-pane' },
-        h('div', { className: 'kvcx-preset' },
-          h('div', null,
-            h('strong', null, 'Tarjeta de fábrica: Bryan Valdes Ch. · FIGIT.ai'),
-            h('small', null, 'Restaura foto, cargo, canales, logos y colores FIGIT. El enlace público se mantiene.')),
-          h('button', { type: 'button', className: 'kvcx-btn', onClick: () => {
-            if (typeof confirm === 'function' && !confirm('¿Reemplazar los datos actuales por la tarjeta FIGIT de fábrica?')) return;
-            commit({ profile: KVC.normalize(Object.assign({}, KVC.DEFAULT_PROFILE, { publicUrl: model.profile.publicUrl })) });
-          } }, 'Restaurar')),
+        h(TemplatePicker, null),
         !p.whatsapp ? h('p', { className: 'kvcx-warn' }, 'Falta tu WhatsApp (pestaña Canales): es el canal principal de la tarjeta.') : null,
         h(ImageField, { label: 'Foto de perfil', k: 'photo', kind: 'photo', profile: p }),
         h('div', { className: 'kvcx-grid' },
@@ -580,12 +740,23 @@ export default function mount(shell) {
           h(Field, { label: 'Apellidos', k: 'lastName', profile: p }),
           h(Field, { label: 'Cargo', k: 'title', profile: p }),
           h(Field, { label: 'Empresa', k: 'company', profile: p }),
-          h(Field, { label: 'Frase', k: 'tagline', profile: p, area: true, wide: true }))),
+          h(Field, { label: 'Frase', k: 'tagline', profile: p, area: true, wide: true })),
+        h('div', { className: 'kvcx-sub' }, 'English · tarjeta en inglés'),
+        h('div', { className: 'kvcx-grid' },
+          h(Field, { label: 'Cargo (inglés)', k: 'titleEn', profile: p, placeholder: 'CEO · Founder' }),
+          h(Field, { label: 'Lema del reverso (inglés)', k: 'mottoEn', profile: p }),
+          h(Field, { label: 'Frase (inglés)', k: 'taglineEn', profile: p, area: true, wide: true,
+            help: 'Quien abre la tarjeta con el teléfono en inglés la ve en inglés; el botón EN/ES la cambia. Vacío = se usa el texto en español.' }))),
       canales: h('div', { className: 'kvcx-pane' },
         h('div', { className: 'kvcx-grid' },
           h(Field, { label: 'WhatsApp · canal principal', k: 'whatsapp', profile: p, placeholder: '56987161097', type: 'tel', help: 'Con código de país, solo dígitos. Vacío = el del teléfono.' }),
           h(Field, { label: 'Teléfono visible', k: 'phone', profile: p, placeholder: '+56 9 8716 1097', type: 'tel' }),
           h(Field, { label: 'Mensaje inicial de WhatsApp', k: 'whatsappMsg', profile: p, area: true, wide: true }),
+          h(Field, { label: 'Mensaje inicial de WhatsApp (inglés)', k: 'whatsappMsgEn', profile: p, area: true, wide: true }),
+          h('label', { className: 'kvcx-check kvcx-wide' },
+            h('input', { type: 'checkbox', checked: p.leadForm === 'on', onChange: (e) => updateProfile({ leadForm: e.target.checked ? 'on' : 'off' }) }),
+            h('span', null, h('strong', null, 'Formulario «Déjame tus datos»'),
+              h('small', null, 'Quien escanea puede dejarte nombre, empresa, correo y teléfono. Llegan a la pestaña Prospectos.'))),
           h(Field, { label: 'Correo', k: 'email', profile: p, type: 'email' }),
           h(Field, { label: 'Sitio web', k: 'website', profile: p, type: 'url' }),
           h(Field, { label: 'LinkedIn', k: 'linkedin', profile: p, type: 'url' }),
@@ -612,6 +783,7 @@ export default function mount(shell) {
           h(Field, { label: 'Hashtag', k: 'hashtag', profile: p }),
           h(Field, { label: 'Tipografía', k: 'font', profile: p, help: 'Familia de la marca (si está instalada en el equipo).' }))),
       publicar: h(PublishPane, { m }),
+      prospectos: h(LeadsPane, { l: st.leads, m }),
     }[u.tab];
 
     return h('div', { className: 'kimos-vcard' },
@@ -621,7 +793,9 @@ export default function mount(shell) {
           h('span', { className: 'kvcx-ver', title: 'KIMOS vCard v' + APP_VERSION }, 'v' + APP_VERSION),
           m.published ? h('span', { className: 'kvcx-pill-ok' }, '● Publicada') : null),
         h('nav', { className: 'kvcx-tabs' }, TABS.map((t) =>
-          h('button', { key: t.id, type: 'button', className: 'kvcx-tab' + (u.tab === t.id ? ' kvcx-tab-on' : ''), onClick: () => setUi({ tab: t.id }) }, t.label))),
+          h('button', { key: t.id, type: 'button', className: 'kvcx-tab' + (u.tab === t.id ? ' kvcx-tab-on' : ''), onClick: () => { setUi({ tab: t.id }); if (t.id === 'prospectos') void loadLeads(); } },
+            t.label,
+            t.id === 'prospectos' && newLeads(st.leads) ? h('span', { className: 'kvcx-badge' }, newLeads(st.leads)) : null))),
         h('div', { className: 'kvcx-actions' },
           h('div', { className: 'kvcx-seg' },
             h('button', { type: 'button', className: u.device === 'mobile' ? 'kvcx-on' : '', onClick: () => setUi({ device: 'mobile' }) }, 'Móvil'),
@@ -631,7 +805,7 @@ export default function mount(shell) {
         h('section', { className: 'kvcx-editor' }, m.loaded ? pane : h('p', { className: 'kvcx-help' }, 'Cargando…')),
         h('section', { className: 'kvcx-preview' },
           h('div', { className: 'kvcx-preview-k' }, 'Así la verá quien escanee tu QR'),
-          m.loaded ? h(Preview, { profile: p, qrUrl: qrTarget(), device: u.device }) : null)));
+          m.loaded ? h(Preview, { profile: p, qrUrl: qrTarget(), device: u.device, leads: m.published }) : null)));
   }
 
   return {
@@ -640,6 +814,7 @@ export default function mount(shell) {
       disposed = true;
       clearTimeout(saveT);
       clearTimeout(pubT);
+      clearInterval(leadsTimer);
       listeners.clear();
       if (typeof agentOff === 'function') agentOff();
     },

@@ -397,3 +397,27 @@
 .kvc .kvc-field small.kvc-dest-hint { color: var(--kvc-primary); font-weight: 600; }
 .kvc.kvc-dark .kvc-field small.kvc-dest-hint { color: var(--kvc-accent); }
 .kvc .kvc-panel-qr { padding-top: 34px; }
+/* ── v1.2: idioma ── */
+.kvc .kvc-lang { width: auto; min-width: 36px; padding: 0 8px; font-size: 11.5px; font-weight: 800; letter-spacing: .06em; }
+/* ── v1.2: «Déjame tus datos» ── */
+.kvc .kvc-lead { margin-top: 4px; }
+.kvc .kvc-lead-intro { margin: -4px 0 12px; text-align: center; font-size: 12.5px; color: var(--kvc-muted); }
+.kvc .kvc-lead-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.kvc .kvc-lead-f { display: grid; gap: 4px; min-width: 0; }
+.kvc .kvc-lead-f > span { font-size: 11px; font-weight: 700; color: var(--kvc-text-2); }
+.kvc .kvc-lead-wide, .kvc .kvc-lead-send, .kvc .kvc-lead-msg { grid-column: 1 / -1; }
+.kvc .kvc-lead-in { padding: 10px 12px; font-size: 14px; font-family: inherit; resize: vertical; }
+.kvc .kvc-hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.kvc .kvc-lead-send { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 13px 16px; border-radius: 14px; font-size: 14px; font-weight: 700;
+  color: var(--kvc-on); background: linear-gradient(90deg, var(--kvc-primary), var(--kvc-primary-2)); box-shadow: var(--kvc-glow); }
+.kvc .kvc-lead-send .kvc-i { font-size: 17px; }
+.kvc .kvc-lead-send:disabled { opacity: .6; cursor: default; }
+.kvc .kvc-lead-wa { background: linear-gradient(135deg, var(--kvc-wa-brand), var(--kvc-wa)); box-shadow: 0 12px 24px -14px var(--kvc-wa); }
+.kvc .kvc-lead-msg { margin: 0; min-height: 1em; font-size: 12.5px; font-weight: 600; color: var(--kvc-muted); text-align: center; }
+.kvc .kvc-lead-msg:empty { display: none; }
+.kvc .kvc-lead-err { color: var(--kvc-map); }
+.kvc .kvc-lead-ok { color: var(--kvc-wa); }
+.kvc .kvc-lead-thanks { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 18px; border-radius: 16px; text-align: center;
+  background: color-mix(in srgb, var(--kvc-wa) 8%, var(--kvc-tile)); border: 1px solid color-mix(in srgb, var(--kvc-wa) 35%, transparent); }
+.kvc .kvc-lead-thanks .kvc-lead-ok { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-size: 20px; color: var(--kvc-on); background: var(--kvc-wa); }
+@container (max-width: 400px) { .kvc .kvc-lead-form { grid-template-columns: 1fr; } }
