@@ -914,8 +914,11 @@ var KVC = (function () {
       };
       var hp = h('input', { type: 'text', name: '_hp', tabindex: '-1', autocomplete: 'off', class: 'kvc-hp', 'aria-hidden': 'true' });
       var leadMsg = h('p', { class: 'kvc-lead-msg', role: 'status', 'aria-live': 'polite' });
-      var sendBtn = h('button', { type: 'submit', class: 'kvc-lead-send' + (direct ? ' kvc-lead-wa' : '') },
-        icon(direct ? 'whatsapp' : 'send'), h('span', { text: direct ? _('Enviar por WhatsApp') : _('Enviar mis datos') }));
+      // El botón es siempre «Enviar mis datos». Con gateway, el prospecto se
+      // registra en la app; sin él (HTML no conectado), los datos le llegan
+      // al dueño de la tarjeta por WhatsApp, ya escritos.
+      var sendBtn = h('button', { type: 'submit', class: 'kvc-lead-send' },
+        icon('send'), h('span', { text: _('Enviar mis datos') }));
       var form = h('form', { class: 'kvc-lead-form', novalidate: true },
         leadField('name', 'Nombre', 'text', true), leadField('company', 'Empresa', 'text'),
         leadField('email', 'Correo', 'email'), leadField('phone', 'WhatsApp o teléfono', 'tel'),
@@ -1344,8 +1347,18 @@ var KVC = (function () {
       '<meta name="apple-mobile-web-app-title" content="' + htmlEsc(p.name.split(' ')[0] + ' · ' + (p.company || 'Tarjeta')) + '">\n' +
       '<style>html,body{margin:0;padding:0;background:#F8FAFC}#kvc-root{min-height:100vh;display:flex;flex-direction:column}#kvc-root>.kvc{flex:1}</style>\n' +
       '</head>\n<body>\n<div id="kvc-root"></div>\n<script>\n' + String(coreSrc).replace(/<\/(script)/gi, '<\\/$1').replace(/<!--/g, '<\\!--') + '\n' +
-      'KVC.injectCss();KVC.mount(document.getElementById("kvc-root"),' + json + ',{qrUrl:' + JSON.stringify(extra.qrUrl || '') + '||undefined,' +
-        'leadEndpoint:' + JSON.stringify(extra.leadEndpoint || '') + ',statsEndpoint:' + JSON.stringify(extra.statsEndpoint || '') + ',source:"sitio propio"});\n' +
+      'KVC.injectCss();(function(){var P=' + json + ',O={qrUrl:' + JSON.stringify(extra.qrUrl || '') + '||undefined,' +
+        'leadEndpoint:' + JSON.stringify(extra.leadEndpoint || '') + ',statsEndpoint:' + JSON.stringify(extra.statsEndpoint || '') + ',source:"sitio propio"};' +
+        // kvc-config.json (opcional, junto al HTML): {"gateway":"…/api/public/app/{instancia}/submit/"}
+        // conecta formulario y medición con la app sin regenerar la página.
+        'function go(){KVC.mount(document.getElementById("kvc-root"),P,O);}' +
+        (extra.configUrl ? 'var done=false,t=setTimeout(function(){if(!done){done=true;go();}},2500);' +
+          'fetch(' + JSON.stringify(extra.configUrl) + ',{cache:"no-cache"}).then(function(r){return r.ok?r.json():{};}).catch(function(){return {};}).then(function(c){' +
+          'if(done)return;done=true;clearTimeout(t);var g=String((c&&c.gateway)||"").trim();' +
+          'if(g.slice(0,8)==="https://"&&/\\/submit\\/?$/.test(g)){if(g.charAt(g.length-1)!=="/")g+="/";O.leadEndpoint=g+"lead";O.statsEndpoint=g+"visita";}'+
+          'go();});'
+          : 'go();') +
+        '})();\n' +
       '</script>\n</body>\n</html>\n';
   }
 

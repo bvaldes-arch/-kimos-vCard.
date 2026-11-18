@@ -13,7 +13,7 @@
  */
 
 // Mantener en sincronía con manifest.json (y con el catálogo raíz).
-const APP_VERSION = '2.0.1';
+const APP_VERSION = '2.0.2';
 const APP_ID = 'kimos-vcard';
 
 // Estilos de la app, también inyectados desde JS con su versión: KIMOS no

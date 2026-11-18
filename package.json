@@ -1,6 +1,6 @@
 {
   "name": "kimos-vcard",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "private": true,
   "description": "KIMOS vCard: tarjeta de contacto virtual con QR para KIMOS Enterprise.",
   "type": "module",

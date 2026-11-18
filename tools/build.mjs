@@ -97,9 +97,18 @@ const html = KVC.standaloneHtml(profile, core, {
   icon: 'logo-mark.png',
   touchIcon: 'photo.jpg',
   manifest: 'manifest.webmanifest',
+  configUrl: 'kvc-config.json',
   leadEndpoint: GATEWAY.length > 1 ? GATEWAY + 'lead' : '',
   statsEndpoint: GATEWAY.length > 1 ? GATEWAY + 'visita' : '',
 });
+// Conexión con KIMOS editable sin regenerar: pega aquí el «Enlace para
+// formularios externos» de la app (pestaña Publicar).
+const cfgPath = path.join(DOCS, 'kvc-config.json');
+const prevCfg = fs.existsSync(cfgPath) ? JSON.parse(fs.readFileSync(cfgPath, 'utf8')) : {};
+fs.writeFileSync(cfgPath, JSON.stringify({
+  gateway: GATEWAY.length > 1 ? GATEWAY : (prevCfg.gateway || ''),
+  _ayuda: 'Pega en "gateway" el «Enlace para formularios externos» de KIMOS vCard (pestaña Publicar). Termina en /submit/. Con él, cada prospecto de esta página queda registrado en la app.',
+}, null, 2) + '\n');
 fs.writeFileSync(path.join(DOCS, 'manifest.webmanifest'), JSON.stringify({
   name: profile.name + ' · ' + profile.company,
   short_name: profile.name.split(' ')[0] + ' · ' + profile.company,

@@ -88,6 +88,7 @@ for (const [name, ctxOpts] of [
   await decodeQrs(page, 'Hub');
 
   // v1.2 · «Déjame tus datos» sin gateway: valida y abre WhatsApp con los datos.
+  ok((await page.textContent('.kvc-lead-send')).trim() === 'Enviar mis datos', 'formulario: el botón dice «Enviar mis datos»');
   await page.click('.kvc-lead-send');
   ok((await page.locator('.kvc-lead-msg').textContent()).includes('nombre'), 'formulario: exige nombre');
   await page.fill('#kvc-lead-name', 'Ana Rojas');
