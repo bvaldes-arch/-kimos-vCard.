@@ -560,9 +560,9 @@ export default function mount(shell) {
     }
   }
   /* ── Seguimiento (v2.0) ──
-     Redacta el primer mensaje al prospecto. Con shell.agents (KIMOS ≥ 0.96 y
-     permiso agent.ask) lo escribe el agente elegido; si no existe, falla o
-     se agota la cuota, lo escribe la app con los datos del prospecto. */
+     Redacta el primer mensaje al prospecto con sus datos. (Que lo redacte un
+     agente de KIMOS exige KIMOS ≥ 0.96 y el permiso agent.ask, que hace
+     rechazar el .kapp en versiones anteriores: queda para cuando se actualice.) */
   function followUpDraft(lead, tone, channel) {
     const d = lead.data || {};
     const owner = d.for ? (model.team.find((x) => x.key === d.for) || {}).profile || {} : model.profile;
@@ -589,26 +589,6 @@ export default function mount(shell) {
       : '\n— ' + me + ', ' + co;
     return open + (channel === 'email' ? '\n\n' : ' ') + body + ' ' + ask + sign;
   }
-  let agentsList = null;
-  async function loadAgents() {
-    if (agentsList || !shell.agents || typeof shell.authFetch !== 'function') return agentsList || [];
-    try {
-      const r = await shell.authFetch('/api/identity/actors', { cache: 'no-store' });
-      const j = r.ok ? await r.json() : { actors: [] };
-      agentsList = (j.actors || []).filter((a) => a && a.type === 'agent' && a.active !== false);
-    } catch (e) { agentsList = []; }
-    return agentsList;
-  }
-  async function agentDraft(agentId, lead, tone, channel) {
-    const d = lead.data || {};
-    const r = await shell.agents.ask({
-      agentId,
-      question: 'Redacta el primer mensaje de seguimiento por ' + (channel === 'email' ? 'correo' : 'WhatsApp') + ', tono ' + tone + ', en ' + (d.lang === 'en' ? 'inglés' : 'español') + ', para este prospecto. Devuelve solo el mensaje.',
-      context: { prospecto: { nombre: d.name, empresa: d.company, mensaje: d.message, idioma: d.lang }, remitente: { nombre: model.profile.name, cargo: model.profile.title, empresa: model.profile.company, web: model.profile.website } },
-    });
-    return String((r && r.answer) || '').trim();
-  }
-
   const leadsTimer = setInterval(() => {
     if (typeof document === 'undefined' || document.visibilityState !== 'hidden') void loadLeads();
   }, 15000);
@@ -961,22 +941,7 @@ export default function mount(shell) {
     const [tone, setTone] = useState('cordial');
     const [channel, setChannel] = useState(d.phone ? 'whatsapp' : 'email');
     const [text, setText] = useState(() => followUpDraft(lead, 'cordial', d.phone ? 'whatsapp' : 'email'));
-    const [agents, setAgents] = useState([]);
-    const [agentId, setAgentId] = useState('');
-    const [busy, setBusy] = useState(false);
-    const [note, setNote] = useState('');
-    useEffect(() => { if (shell.agents) loadAgents().then((a) => { setAgents(a); if (a[0]) setAgentId(a[0].id); }); }, []);
-    const regen = (t, c) => { setText(followUpDraft(lead, t, c)); setNote(''); };
-    const ask = async () => {
-      setBusy(true); setNote('');
-      try {
-        const out = await agentDraft(agentId, lead, tone, channel);
-        if (out) { setText(out); setNote('Redactado por el agente. Revísalo antes de enviar.'); }
-      } catch (e) {
-        setNote(String((e && e.message) || e) + ' · Se mantiene el borrador de la app.');
-      }
-      setBusy(false);
-    };
+    const regen = (t, c) => setText(followUpDraft(lead, t, c));
     const wa = String(d.phone || '').replace(/\D/g, '');
     const send = () => {
       if (lead.status === 'new' || !lead.status) void setLeadStatus(lead, { status: 'contacted', contactedAt: new Date().toISOString() });
@@ -990,17 +955,12 @@ export default function mount(shell) {
           wa ? h('button', { type: 'button', className: channel === 'whatsapp' ? 'kvcx-on' : '', onClick: () => { setChannel('whatsapp'); regen(tone, 'whatsapp'); } }, 'WhatsApp') : null,
           d.email ? h('button', { type: 'button', className: channel === 'email' ? 'kvcx-on' : '', onClick: () => { setChannel('email'); regen(tone, 'email'); } }, 'Correo') : null)),
       h('textarea', { className: 'kvcx-input', rows: channel === 'email' ? 8 : 5, value: text, onChange: (e) => setText(e.target.value), 'aria-label': 'Mensaje de seguimiento' }),
-      note ? h('p', { className: 'kvcx-help' }, note) : null,
       h('div', { className: 'kvcx-row kvcx-wrap' },
         channel === 'whatsapp' && wa
           ? h('a', { className: 'kvcx-btn kvcx-btn-primary', href: 'https://wa.me/' + wa + '?text=' + encodeURIComponent(text), target: '_blank', rel: 'noopener noreferrer', onClick: send }, 'Enviar por WhatsApp')
           : d.email ? h('a', { className: 'kvcx-btn kvcx-btn-primary', href: 'mailto:' + d.email + '?subject=' + encodeURIComponent((d.lang === 'en' ? 'Following up · ' : 'Seguimiento · ') + m.profile.company) + '&body=' + encodeURIComponent(text), onClick: send }, 'Abrir en el correo') : null,
-        h('button', { type: 'button', className: 'kvcx-btn kvcx-btn-ghost', onClick: () => { if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => shell.notify({ level: 'success', text: 'Mensaje copiado' })); } }, 'Copiar'),
-        shell.agents && agents.length ? h('span', { className: 'kvcx-row' },
-          h('select', { className: 'kvcx-input kvcx-select', value: agentId, onChange: (e) => setAgentId(e.target.value), 'aria-label': 'Agente' },
-            agents.map((ag) => h('option', { key: ag.id, value: ag.id }, ag.displayName || ag.name || ag.id))),
-          h('button', { type: 'button', className: 'kvcx-btn', disabled: busy, onClick: ask }, busy ? 'Redactando…' : 'Pedir al agente')) : null),
-      !shell.agents ? h('p', { className: 'kvcx-help' }, 'Borrador escrito por la app con los datos del prospecto. Con KIMOS 0.96 o superior, el agente de KIMOS también puede redactarlo.') : null);
+        h('button', { type: 'button', className: 'kvcx-btn kvcx-btn-ghost', onClick: () => { if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => shell.notify({ level: 'success', text: 'Mensaje copiado' })); } }, 'Copiar')),
+      h('p', { className: 'kvcx-help' }, 'Borrador escrito con los datos del prospecto. Edítalo antes de enviar.'));
   }
 
   function LeadsPane({ l, m }) {
