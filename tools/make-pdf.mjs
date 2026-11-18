@@ -173,6 +173,14 @@ if (got2 !== URL_PUBLICA) throw new Error('El QR de la página 2 decodifica «' 
 console.log('✔ QR página 2 →', got2);
 await page.screenshot({ path: path.join(tmp, 'p2.png') });
 await page.pdf({ path: path.join(tmp, 'p2.pdf'), width: '900px', height: '520px', printBackground: true, pageRanges: '1' });
+// Imagen para compartir (og:image de docs/index.html), 1200×630.
+await page.setContent(`<!doctype html><meta charset="utf-8"><body><script>${core.replace(/<\/(script)/gi, '<\\/$1')}</script>`, { waitUntil: 'load' });
+const og = await page.evaluate(async ([imgs, url]) => {
+  const b = await KVC.shareImage(Object.assign({}, KVC.DEFAULT_PROFILE, imgs), { qrUrl: url });
+  return await new Promise((r) => { const f = new FileReader(); f.onload = () => r(f.result); f.readAsDataURL(b); });
+}, [IMGS, URL_PUBLICA]);
+fs.writeFileSync(path.join(ROOT, 'docs', 'og.png'), Buffer.from(og.split(',')[1], 'base64'));
+console.log('✔ docs/og.png (vista previa al compartir)');
 await browser.close();
 if (errs.length) throw new Error('Errores en la página: ' + errs.join(' | '));
 

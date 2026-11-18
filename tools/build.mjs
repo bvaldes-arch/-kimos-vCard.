@@ -28,6 +28,10 @@ const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'))
 const VERSION = pkg.version;
 // URL pública de la tarjeta autónoma (GitHub Pages del repo). Sobrescribible.
 const PAGES_URL = process.env.KVC_PUBLIC_URL || pkg.kvc.publicUrl;
+// Gateway de la tarjeta publicada en KIMOS (…/api/public/app/{instancia}/submit/).
+// Con él, el formulario y la medición de docs/ llegan a la app. Lo muestra la
+// app en Publicar → «Enlace para formularios externos».
+const GATEWAY = (process.env.KVC_GATEWAY || (pkg.kvc && pkg.kvc.gateway) || '').replace(/\/?$/, '/');
 
 /* ── Núcleo ── */
 function icons() {
@@ -51,7 +55,8 @@ const css = read('card.css');
 const core = read('card-core.js')
   .replace('/*@@QRCODE@@*/', () => qr)
   .replace('/*@@ICONS@@*/ {}', () => JSON.stringify(icons()))
-  .replace("/*@@CSS@@*/ ''", () => JSON.stringify(css));
+  .replace("/*@@CSS@@*/ ''", () => JSON.stringify(css))
+  .replace("'@@VERSION@@'", () => JSON.stringify(VERSION));
 if (/@@\w+@@/.test(core)) throw new Error('Quedó un marcador sin reemplazar en el núcleo');
 
 /* ── App KIMOS ── */
@@ -59,7 +64,9 @@ fs.rmSync(APP, { recursive: true, force: true });
 fs.mkdirSync(path.join(APP, 'dist'), { recursive: true });
 fs.mkdirSync(path.join(APP, 'assets'), { recursive: true });
 
-let app = read('app.js').replace('/*@@CORE@@*/', () => core);
+// v1.3: el bundle ya NO lleva el núcleo dentro; lo carga de assets/kvc-core.js.
+let app = read('app.js').replace("/*@@APPCSS@@*/ ''", () => JSON.stringify(read('app.css')));
+if (/@@\w+@@/.test(app)) throw new Error('Quedó un marcador sin reemplazar en la app');
 app = app.replace(/const APP_VERSION = '[^']*';/, `const APP_VERSION = '${VERSION}';`);
 fs.writeFileSync(path.join(APP, 'dist', 'index.js'), app);
 fs.writeFileSync(path.join(APP, 'dist', 'index.css'), read('app.css'));
@@ -86,13 +93,24 @@ const profile = KVC.normalize(Object.assign({}, KVC.DEFAULT_PROFILE, { publicUrl
 const html = KVC.standaloneHtml(profile, core, {
   qrUrl: PAGES_URL,
   canonical: PAGES_URL,
-  ogImage: PAGES_URL + 'photo.jpg',
+  ogImage: PAGES_URL + 'og.png',          // la genera tools/make-pdf.mjs
   icon: 'logo-mark.png',
+  touchIcon: 'photo.jpg',
+  manifest: 'manifest.webmanifest',
+  leadEndpoint: GATEWAY.length > 1 ? GATEWAY + 'lead' : '',
+  statsEndpoint: GATEWAY.length > 1 ? GATEWAY + 'visita' : '',
 });
+fs.writeFileSync(path.join(DOCS, 'manifest.webmanifest'), JSON.stringify({
+  name: profile.name + ' · ' + profile.company,
+  short_name: profile.name.split(' ')[0] + ' · ' + profile.company,
+  start_url: './', scope: './', display: 'standalone',
+  background_color: '#F8FAFC', theme_color: profile.theme.primary,
+  icons: [{ src: 'photo.jpg', sizes: '360x360', type: 'image/jpeg' }, { src: 'logo-mark.png', sizes: '256x256', type: 'image/png' }],
+}, null, 2));
 fs.writeFileSync(path.join(DOCS, 'index.html'), html);
 fs.writeFileSync(path.join(DOCS, '.nojekyll'), '');
 fs.writeFileSync(path.join(DOCS, 'contacto.vcf'), KVC.vcard(profile, fs.readFileSync(path.join(SRC, 'img', 'photo.jpg')).toString('base64')));
 
 console.log(`✔ kimos-vcard ${VERSION}`);
 console.log(`  app/kimos-vcard  (dist ${(app.length / 1024).toFixed(0)} KB, core ${(core.length / 1024).toFixed(0)} KB)`);
-console.log(`  docs/index.html  → ${PAGES_URL}`);
+console.log(`  docs/index.html  → ${PAGES_URL}` + (GATEWAY.length > 1 ? `  (formulario y medición → ${GATEWAY})` : '  (formulario → WhatsApp: falta kvc.gateway)'));

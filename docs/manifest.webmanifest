@@ -1,0 +1,21 @@
+{
+  "name": "Bryan Valdes Ch. · FIGIT.ai",
+  "short_name": "Bryan · FIGIT.ai",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F8FAFC",
+  "theme_color": "#0052FF",
+  "icons": [
+    {
+      "src": "photo.jpg",
+      "sizes": "360x360",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "logo-mark.png",
+      "sizes": "256x256",
+      "type": "image/png"
+    }
+  ]
+}

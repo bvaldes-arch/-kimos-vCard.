@@ -45,9 +45,9 @@ defecto del tenant. Sin registro de marcas, todo se ajusta a mano.
 | `public.read` | Que la página del QR lea lo publicado, sin sesión. |
 | `files.write` | Subir foto y logos con ruta gestionada por el host (§7.e). Sin él, se embeben comprimidos. |
 | `brand.read` | Asumir colores, logos y tipografía del registro de marcas (§7.f). |
-| `public.submit` | Recibir «Déjame tus datos» como prospectos (canal `lead`). |
+| `public.submit` | Recibir «Déjame tus datos» como prospectos (canal `lead`) y la medición de visitas (canal `visita`). |
 | `records.link` | «Pasar a Clientes»: crea o reutiliza el contacto en la identidad compartida. |
-| `agent.control` | `GET_CARD`, `UPDATE_CARD`, `LIST_LEADS`, `SET_PUBLISHED`. |
+| `agent.control` | `GET_CARD`, `UPDATE_CARD`, `LIST_LEADS`, `GET_STATS`, `SET_PUBLISHED`. |
 
 ## Avisos del revisor que se mantienen, y por qué
 
@@ -77,6 +77,7 @@ Fuente y build: repositorio `kimos-vcard` (`node tools/build.mjs`).
 
 | Versión | Cambios |
 |---|---|
+| **1.3.0** | «Medición». **Todo formulario registra al prospecto**: la página de KIMOS, la vista previa de la app (marcado «vista previa») y el HTML exportado alojado en otro dominio (GitHub Pages, figit.ai), por el gateway público; si el envío falla, un botón lo manda por WhatsApp. Estilos ligados a la versión (KIMOS dejaba la hoja anterior al actualizar sin recargar). Pestaña **Medición**: aperturas, toques por canal, contactos guardados, prospectos y conversión, aperturas por día, idioma y origen (canal `visita`, una por visita, sin cookies). **Imagen para compartir** 1200×630 (og:image del HTML exportado). **Un solo núcleo**: el bundle carga `assets/kvc-core.js` (de 203 KB a 76 KB). **Agregar a inicio**: ícono, título y guía para iPhone y Android. Tool de agente `GET_STATS`. |
 | **1.2.0** | «Captura». Formulario «Déjame tus datos» en la tarjeta pública (gateway `public.submit`, canal `lead`, honeypot) con pestaña **Prospectos**: WhatsApp/correo al prospecto, archivar y **Pasar a Clientes** (`shell.records`, contacto sin duplicar). Fuera de KIMOS el formulario abre WhatsApp con los datos escritos. **QR sin internet**: destino «Contacto sin internet» (vCard dentro del QR) y PNG en Publicar. **Inglés**: botón ES/EN, detección del idioma del teléfono y campos en inglés. **Plantillas**: FIGIT (fábrica), en blanco y una por cada marca del registro; una tarjeta nueva de otra persona nunca recibe los datos de Bryan. Permisos nuevos: `public.submit`, `records.link`. |
 | **1.1.0** | WhatsApp siempre presente: acceso rápido en el Hub, fila en la Tarjeta 3D y destino del QR (si falta, se toma del teléfono). Correo solo una vez en el Hub. Destino del QR elegible entre tarjeta digital, WhatsApp, sitio web, Instagram y LinkedIn. Logo de la marca en la esquina superior izquierda del Hub, superior derecha de la Tarjeta 3D (con QR más grande) y superior derecha de Código QR. Cargo bajo el nombre y empresa debajo. Botón «Restaurar» de la tarjeta FIGIT; la instancia del dueño ya no se reemplaza con el perfil de KIMOS ni se re-marca. El HTML exportado lleva el QR del enlace público. |
 | **1.0.1** | Instagram oficial de FIGIT: @figit.chile. |

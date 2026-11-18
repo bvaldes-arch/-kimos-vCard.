@@ -25,6 +25,7 @@ var KVC = (function () {
   var ICONS = /*@@ICONS@@*/ {};
 
   var SVGNS = 'http://www.w3.org/2000/svg';
+  var VERSION = '@@VERSION@@';
 
   /* ── Perfil por defecto: Bryan Valdes Ch. · FIGIT.ai ────────────────── */
   var DEFAULT_PROFILE = {
@@ -63,6 +64,7 @@ var KVC = (function () {
     whatsappMsgEn: "Hi Bryan, great to connect. I'm reaching out from your FIGIT.ai digital card",
     mottoEn: 'Strategic Artificial Intelligence, Predictive Models and High-Impact Automation.',
     leadForm: 'on',
+    stats: 'on',
     theme: { primary: '#0052FF', ink: '#0D366B', soft: '#DDF0FF', accent: '#00D2FF' }
   };
 
@@ -72,13 +74,14 @@ var KVC = (function () {
     var e = {};
     Object.keys(DEFAULT_PROFILE).forEach(function (k) { e[k] = k === 'theme' ? DEFAULT_PROFILE.theme : ''; });
     e.leadForm = 'on';
+    e.stats = 'on';
     return e;
   })();
 
   var FIELDS = ['name', 'firstName', 'lastName', 'title', 'company', 'tagline', 'phone', 'whatsapp',
     'whatsappMsg', 'email', 'website', 'linkedin', 'instagram', 'address', 'city', 'region', 'country',
     'photo', 'logo', 'logoMark', 'logoWord', 'publicUrl', 'cardId', 'motto', 'location', 'hashtag', 'font', 'brandId', 'brandName',
-    'titleEn', 'taglineEn', 'whatsappMsgEn', 'mottoEn', 'leadForm'];
+    'titleEn', 'taglineEn', 'whatsappMsgEn', 'mottoEn', 'leadForm', 'stats'];
 
   function str(v, max) {
     if (v === null || v === undefined) return '';
@@ -99,6 +102,7 @@ var KVC = (function () {
     if (!out.whatsapp && out.phone) out.whatsapp = out.phone.replace(/\D/g, '');
     out.font = out.font.replace(/[^\w \-]/g, '').slice(0, 60);
     out.leadForm = out.leadForm === 'off' ? 'off' : 'on';
+    out.stats = out.stats === 'off' ? 'off' : 'on';
     var t = p.theme || {};
     out.theme = {};
     Object.keys(DEFAULT_PROFILE.theme).forEach(function (k) {
@@ -201,6 +205,13 @@ var KVC = (function () {
    "El contacto va dentro del QR: se guarda en la agenda sin conexión.": "The contact lives inside the QR: it saves to the phone without internet.",
    "Idioma": "Language"
   };
+  EN['Agregar a inicio'] = 'Add to home screen';
+  EN['Tenla a dos toques: agrégala a la pantalla de inicio de tu teléfono.'] = 'Keep it two taps away: add it to your phone home screen.';
+  EN['iPhone (Safari)'] = 'iPhone (Safari)';
+  EN['Toca Compartir y luego «Agregar a inicio».'] = 'Tap Share, then “Add to Home Screen”.';
+  EN['Android (Chrome)'] = 'Android (Chrome)';
+  EN['Toca ⋮ y luego «Agregar a la pantalla principal».'] = 'Tap ⋮, then “Add to Home screen”.';
+  EN['Agregar ahora'] = 'Add now';
   function tr(lang, s) { return lang === 'en' && EN[s] ? EN[s] : s; }
   function pickLang(opts) {
     if (opts && (opts.lang === 'es' || opts.lang === 'en')) return opts.lang;
@@ -596,6 +607,7 @@ var KVC = (function () {
 
     /* Acciones */
     function onSave() {
+      track('save');
       saveVcf(p, opts.resolve).then(function () { toast(_('Contacto descargado: ábrelo para guardarlo en tu agenda.')); });
     }
     function logoData() {
@@ -606,11 +618,13 @@ var KVC = (function () {
       }).catch(function () { return ''; });
     }
     function onQrPng() {
+      track('qr');
       logoData().then(function (logo) { return qrPng(qrUrl, { dark: p.theme.ink, logo: logo, px: 1400 }); })
         .then(function (b) { download('QR_' + slug(p.name) + '.png', b); toast(_('QR descargado en alta resolución')); })
         .catch(function () { toast(_('No se pudo generar el PNG')); });
     }
     function onShare() {
+      track('share');
       var data = { title: p.name + ' · ' + p.company, text: _('Te comparto mi tarjeta de contacto digital.'), url: qrUrl };
       if (navigator.share && !opts.preview) { navigator.share(data).catch(function () { }); return; }
       openModal(shareModal());
@@ -643,6 +657,23 @@ var KVC = (function () {
         h('div', { class: 'kvc-copy' },
           h('input', { class: 'kvc-input', value: qrUrl, readonly: true, 'aria-label': _('Enlace de la tarjeta') }),
           h('button', { type: 'button', class: 'kvc-btn-s', on: { click: function () { copy(qrUrl, _('Enlace copiado')); } } }, icon('copy'), h('span', { text: _('Copiar') }))));
+    }
+    var installEvt = null;
+    function onBip(e) { e.preventDefault(); installEvt = e; }
+    if (typeof window !== 'undefined' && !opts.preview) {
+      window.addEventListener('beforeinstallprompt', onBip);
+      cleanups.push(function () { window.removeEventListener('beforeinstallprompt', onBip); });
+    }
+    function homeModal() {
+      var step = function (t, d) { return h('div', { class: 'kvc-home-step' }, h('strong', { text: t }), h('span', { text: d })); };
+      return h('div', null,
+        h('h3', { class: 'kvc-modal-t', text: _('Agregar a inicio') }),
+        h('p', { class: 'kvc-modal-s', text: _('Tenla a dos toques: agrégala a la pantalla de inicio de tu teléfono.') }),
+        h('div', { class: 'kvc-home' },
+          step(_('iPhone (Safari)'), _('Toca Compartir y luego «Agregar a inicio».')),
+          step(_('Android (Chrome)'), _('Toca ⋮ y luego «Agregar a la pantalla principal».'))),
+        installEvt ? h('div', { class: 'kvc-modal-actions' },
+          h('button', { type: 'button', class: 'kvc-btn-s kvc-btn-s-primary', on: { click: function () { installEvt.prompt(); modalHost.replaceChildren(); } } }, icon('smartphone'), h('span', { text: _('Agregar ahora') }))) : null);
     }
     function vcardModal() {
       var text = vcard(p, '');
@@ -718,6 +749,47 @@ var KVC = (function () {
         h('img', { src: R(p.logo), alt: p.company })) : null;
     }
 
+    /* ── Medición (v1.3) ──
+       Una visita = un envío al gateway (canal 'visita') con los canales que se
+       tocaron. Se manda al ocultar la página (cambiar a WhatsApp, cerrar) y
+       otra vez solo si hubo toques nuevos. Sin cookies ni identificadores. */
+    var stats = { sent: false, clicks: [], saved: 0, shared: 0, lead: '', qr: 0 };
+    function track(what) {
+      if (!opts.statsEndpoint || opts.preview) return;
+      if (what === 'save') stats.saved = 1;
+      else if (what === 'share') stats.shared = 1;
+      else if (what === 'qr') stats.qr = 1;
+      else if (what === 'lead' || what === 'lead-wa') stats.lead = what;
+      else if (stats.clicks.indexOf(what) < 0) stats.clicks.push(what);
+      stats.dirty = true;
+    }
+    function flushStats(force) {
+      if (!opts.statsEndpoint || opts.preview) return;
+      if (stats.sent && !stats.dirty) return;
+      if (!stats.sent && !force && !stats.dirty) { /* visita sin toques: también cuenta */ }
+      var payload = JSON.stringify({
+        visit: stats.sent ? '0' : '1', clicks: stats.clicks.join(','), saved: String(stats.saved), shared: String(stats.shared),
+        qr: String(stats.qr), lead: stats.lead, lang: lang, view: view,
+        ref: (typeof document !== 'undefined' && document.referrer ? String(document.referrer).split('/')[2] || '' : '').slice(0, 80),
+        mobile: /Mobi|Android|iPhone/i.test(typeof navigator !== 'undefined' ? navigator.userAgent : '') ? '1' : '0'
+      });
+      stats.sent = true; stats.dirty = false; stats.clicks = []; stats.saved = 0; stats.shared = 0; stats.qr = 0; stats.lead = '';
+      try {
+        if (navigator.sendBeacon && navigator.sendBeacon(opts.statsEndpoint, new Blob([payload], { type: 'text/plain' }))) return;
+      } catch (e) { /* sigue con fetch */ }
+      try { fetch(opts.statsEndpoint, { method: 'POST', body: payload, keepalive: true, headers: { 'Content-Type': 'text/plain' } }).catch(function () {}); } catch (e) { /* nada */ }
+    }
+    if (opts.statsEndpoint && !opts.preview && typeof document !== 'undefined') {
+      var onHide = function () { if (document.visibilityState === 'hidden') flushStats(true); };
+      var onPageHide = function () { flushStats(true); };
+      document.addEventListener('visibilitychange', onHide);
+      window.addEventListener('pagehide', onPageHide);
+      cleanups.push(function () { document.removeEventListener('visibilitychange', onHide); window.removeEventListener('pagehide', onPageHide); });
+      // Quien abre y se queda mirando sin cambiar de app también cuenta.
+      var firstT = setTimeout(function () { if (!stats.sent) flushStats(true); }, 15000);
+      cleanups.push(function () { clearTimeout(firstT); });
+    }
+
     /* «Déjame tus datos» (v1.2). Con gateway (tarjeta publicada en KIMOS) el
        envío llega a la app como prospecto. Sin gateway (HTML alojado en otro
        sitio) abre WhatsApp con los datos ya escritos: nunca se pierden. */
@@ -750,8 +822,36 @@ var KVC = (function () {
         if (!v.name) { setMsg(_('Escribe tu nombre.'), 'err'); f.name.focus(); return; }
         if (!v.email && !v.phone) { setMsg(_('Deja un correo o un teléfono para responderte.'), 'err'); f.email.focus(); return; }
         if (v.email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.email)) { setMsg(_('Ese correo no parece válido.'), 'err'); f.email.focus(); return; }
-        if (opts.preview) { setMsg(_('Vista previa: el formulario envía en la tarjeta publicada.'), ''); return; }
-        if (direct) {
+        if (opts.preview && direct) { setMsg(_('Vista previa: el formulario envía en la tarjeta publicada.'), ''); return; }
+        lastValues = v;
+        if (direct) { openWa(v); return; }
+        sendBtn.disabled = true;
+        setMsg(_('Enviando…'), '');
+        waFallback.hidden = true;
+        // text/plain = petición «simple»: sin preflight CORS, funciona desde
+        // cualquier dominio. El gateway lee el cuerpo como JSON igual.
+        fetch(opts.leadEndpoint, {
+          method: 'POST', headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+          body: JSON.stringify({ name: v.name, company: v.company, email: v.email, phone: v.phone, message: v.message, lang: lang,
+            source: opts.preview ? 'vista previa' : (opts.source || 'tarjeta'), page: here.slice(0, 200), _hp: hp.value })
+        }).then(function (r) {
+          sendBtn.disabled = false;
+          if (r.status === 429) { setMsg(_('Demasiados envíos seguidos. Espera un minuto.'), 'err'); waFallback.hidden = false; return; }
+          if (!r.ok) { setMsg(_('No se pudo enviar. Inténtalo otra vez o escríbeme por WhatsApp.'), 'err'); waFallback.hidden = false; return; }
+          form.hidden = true;
+          thanks.hidden = false;
+          track('lead');
+          if (typeof opts.onLead === 'function') { try { opts.onLead(v); } catch (e2) { /* el host decide */ } }
+        }).catch(function () {
+          sendBtn.disabled = false;
+          setMsg(_('No se pudo enviar. Inténtalo otra vez o escríbeme por WhatsApp.'), 'err');
+          waFallback.hidden = false;
+        });
+      });
+      // Si el envío no llega (sin red, servidor caído), los datos no se pierden:
+      // un toque y salen por WhatsApp.
+      var lastValues = null;
+      function openWa(v) {
           var txt = lang === 'en'
             ? 'Hi ' + first + ', I am ' + v.name + (v.company ? ' from ' + v.company : '') + '.' + (v.message ? ' ' + v.message.replace(/\s*$/, '').replace(/([^.!?])$/, '$1.') : '') +
               (v.email ? ' My email: ' + v.email + '.' : '') + (v.phone ? ' My phone: ' + v.phone + '.' : '')
@@ -760,24 +860,11 @@ var KVC = (function () {
           var link = h('a', { href: 'https://wa.me/' + p.whatsapp + '?text=' + encodeURIComponent(txt), target: '_blank', rel: 'noopener noreferrer', style: 'display:none' });
           document.body.appendChild(link); link.click(); link.remove();
           setMsg(_('Se abrió WhatsApp con tus datos: solo falta tocar Enviar.'), 'ok');
-          return;
-        }
-        sendBtn.disabled = true;
-        setMsg(_('Enviando…'), '');
-        fetch(opts.leadEndpoint, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: v.name, company: v.company, email: v.email, phone: v.phone, message: v.message, lang: lang, source: 'tarjeta', _hp: hp.value })
-        }).then(function (r) {
-          sendBtn.disabled = false;
-          if (r.status === 429) { setMsg(_('Demasiados envíos seguidos. Espera un minuto.'), 'err'); return; }
-          if (!r.ok) { setMsg(_('No se pudo enviar. Inténtalo otra vez o escríbeme por WhatsApp.'), 'err'); return; }
-          form.hidden = true;
-          thanks.hidden = false;
-        }).catch(function () {
-          sendBtn.disabled = false;
-          setMsg(_('No se pudo enviar. Inténtalo otra vez o escríbeme por WhatsApp.'), 'err');
-        });
-      });
+          track('lead-wa');
+      }
+      var waFallback = h('button', { type: 'button', class: 'kvc-lead-fallback', hidden: true, on: { click: function () { if (lastValues) openWa(lastValues); } } },
+        icon('whatsapp'), h('span', { text: _('Enviar por WhatsApp') }));
+      form.appendChild(waFallback);
       var thanks = h('div', { class: 'kvc-lead-thanks', hidden: true },
         h('span', { class: 'kvc-lead-ok' }, icon('check')),
         h('strong', { text: _('¡Gracias! Te contactaré pronto.') }),
@@ -940,7 +1027,9 @@ var KVC = (function () {
           L.linkedin ? h('span', { text: '•' }) : null,
           L.linkedin ? a(L.linkedin, '', null, ['LinkedIn']) : null,
           h('span', { text: '•' }),
-          h('button', { type: 'button', on: { click: function () { openModal(vcardModal()); } } }, _('Ver Datos vCard')))));
+          h('button', { type: 'button', on: { click: function () { openModal(vcardModal()); } } }, _('Ver Datos vCard')),
+          opts.preview ? null : h('span', { text: '•' }),
+          opts.preview ? null : h('button', { type: 'button', class: 'kvc-home-link', on: { click: function () { openModal(homeModal()); } } }, _('Agregar a inicio')))));
 
     var bg = h('div', { class: 'kvc-bg', 'aria-hidden': 'true' }, contour('kvc-bg-a', 5), contour('kvc-bg-b', 3));
     var wrap = h('div', {
@@ -948,6 +1037,13 @@ var KVC = (function () {
       style: '--kvc-primary:' + p.theme.primary + ';--kvc-ink:' + p.theme.ink + ';--kvc-soft:' + p.theme.soft + ';--kvc-accent:' + p.theme.accent +
         (p.font ? ';font-family:"' + p.font + '","Plus Jakarta Sans",Inter,-apple-system,"Segoe UI",Roboto,sans-serif' : '')
     }, bg, header, h('main', { class: 'kvc-body' }, hub, cardView, qrView), footer, modalHost, toastEl);
+
+    wrap.addEventListener('click', function (e) {
+      var el = e.target && e.target.closest ? e.target.closest('a[class*="kvc-c-"], a.kvc-pill, a.kvc-fr, a.kvc-hl, a.kvc-q') : null;
+      if (!el) return;
+      var m = /kvc-c-(\w+)/.exec(el.className || '');
+      if (m) track(m[1]);
+    }, true);
 
     function setView(v) {
       view = v;
@@ -994,13 +1090,105 @@ var KVC = (function () {
     return svg;
   }
 
+  /* ── Imagen para compartir (v1.3) ──
+     1200×630, el formato que WhatsApp, LinkedIn y Slack muestran como vista
+     previa del enlace. Se dibuja en canvas con la marca de la tarjeta. */
+  function loadImg(src) {
+    return new Promise(function (res) {
+      if (!src) return res(null);
+      var im = new Image(); im.crossOrigin = 'anonymous';
+      im.onload = function () { res(im); }; im.onerror = function () { res(null); };
+      im.src = src;
+    });
+  }
+  function shareImage(profile, o) {
+    o = o || {};
+    var p = localize(normalize(profile), o.lang || 'es');
+    var R = function (s) { return resolveImg(s, o.resolve); };
+    var W = 1200, H = 630;
+    var c = document.createElement('canvas'); c.width = W; c.height = H;
+    var g = c.getContext('2d');
+    var F = '"Plus Jakarta Sans", Inter, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+    var qrSrc = o.qrUrl ? 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(new XMLSerializer().serializeToString(qrSvg(o.qrUrl, { dark: p.theme.ink }))) : '';
+    return Promise.all([loadImg(R(p.photo)), loadImg(R(p.logo)), loadImg(qrSrc)]).then(function (im) {
+      var photo = im[0], logo = im[1], qr = im[2];
+      g.fillStyle = '#FFFFFF'; g.fillRect(0, 0, W, H);
+      // panel suave de la marca
+      g.fillStyle = p.theme.soft; g.fillRect(0, 0, 420, H);
+      g.fillStyle = p.theme.ink; g.fillRect(420, 0, 6, H);
+      var grad = g.createLinearGradient(0, 0, W, 0); grad.addColorStop(0, p.theme.primary); grad.addColorStop(1, p.theme.accent);
+      g.fillStyle = grad; g.fillRect(0, 0, W, 10);
+      // ondas
+      g.save(); g.globalAlpha = 0.18; g.strokeStyle = p.theme.primary; g.lineWidth = 1.4;
+      for (var i = 0; i < 14; i++) { g.beginPath(); var x = 760 + i * 26; g.moveTo(x, -10); g.bezierCurveTo(x + 120, 180, x - 140, 380, x + 60, H + 10); g.stroke(); }
+      g.restore();
+      // foto
+      var cx = 210, cy = 210, r = 130;
+      g.save(); g.beginPath(); g.arc(cx, cy, r + 8, 0, Math.PI * 2); g.fillStyle = grad; g.fill(); g.restore();
+      g.save(); g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.closePath(); g.clip();
+      g.fillStyle = '#FFFFFF'; g.fillRect(cx - r, cy - r, r * 2, r * 2);
+      if (photo) { var s = Math.max((r * 2) / photo.naturalWidth, (r * 2) / photo.naturalHeight); var w = photo.naturalWidth * s, hh = photo.naturalHeight * s; g.drawImage(photo, cx - w / 2, cy - hh * 0.4, w, hh); }
+      else { g.fillStyle = p.theme.primary; g.font = '800 96px ' + F; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText((p.name || '?').split(' ').map(function (x) { return x[0]; }).slice(0, 2).join(''), cx, cy); }
+      g.restore();
+      // logo
+      if (logo) {
+        var lh = 120, lw = logo.naturalWidth * (lh / logo.naturalHeight);
+        if (lw > 260) { lw = 260; lh = logo.naturalHeight * (lw / logo.naturalWidth); }
+        g.fillStyle = '#FFFFFF'; roundRect(g, cx - lw / 2 - 16, 400, lw + 32, lh + 24, 18); g.fill();
+        g.drawImage(logo, cx - lw / 2, 412, lw, lh);
+      }
+      // textos
+      g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+      var X = 480;
+      g.fillStyle = p.theme.ink; g.font = '800 62px ' + F; fitText(g, p.name, X, 150, 660, 62, '800', F);
+      g.fillStyle = p.theme.primary; g.font = '800 30px ' + F; fitText(g, (p.title || '').toUpperCase(), X, 200, 660, 30, '800', F);
+      g.fillStyle = '#475569'; g.font = '600 28px ' + F; g.fillText(p.company || '', X, 242);
+      g.fillStyle = grad; g.fillRect(X, 270, 180, 6);
+      var rows = [];
+      if (p.phone || p.whatsapp) rows.push(['#10B981', (p.phone || '+' + p.whatsapp) + '  ·  WhatsApp']);
+      if (p.email) rows.push(['#C084FC', p.email]);
+      if (p.website) rows.push(['#0EA5E9', prettyUrl(p.website)]);
+      if (p.instagram) rows.push(['#DB2777', igHandle(p.instagram)]);
+      g.font = '500 27px ' + F;
+      rows.slice(0, 4).forEach(function (row, k) {
+        var y = 336 + k * 50;
+        g.fillStyle = row[0]; g.beginPath(); g.arc(X + 9, y - 9, 9, 0, Math.PI * 2); g.fill();
+        g.fillStyle = '#1E293B'; fitText(g, row[1], X + 32, y, qr ? 480 : 640, 27, '500', F);
+      });
+      if (qr) {
+        g.fillStyle = '#FFFFFF'; roundRect(g, W - 230, H - 236, 196, 196, 20); g.fill();
+        g.strokeStyle = '#E2E8F0'; g.lineWidth = 2; roundRect(g, W - 230, H - 236, 196, 196, 20); g.stroke();
+        g.drawImage(qr, W - 220, H - 226, 176, 176);
+      }
+      return new Promise(function (res, rej) { c.toBlob(function (b) { b ? res(b) : rej(new Error('PNG')); }, 'image/png'); });
+    });
+  }
+  function roundRect(g, x, y, w, h2, r) {
+    g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h2, r); g.arcTo(x + w, y + h2, x, y + h2, r);
+    g.arcTo(x, y + h2, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath();
+  }
+  function fitText(g, t, x, y, maxW, size, weight, F) {
+    var s2 = size;
+    g.font = weight + ' ' + s2 + 'px ' + F;
+    while (g.measureText(t).width > maxW && s2 > 14) { s2 -= 2; g.font = weight + ' ' + s2 + 'px ' + F; }
+    g.fillText(t, x, y);
+  }
+
   /* ── Estilos de la tarjeta (todo bajo .kvc) ─────────────────────────── */
   var CSS = /*@@CSS@@*/ '';
-  function injectCss(doc) {
+  /* Los estilos van ligados a la versión: KIMOS no recarga la página al
+     actualizar una app, así que una hoja vieja en <head> se reemplaza. */
+  function injectCss(doc, extraId, extraCss) {
     doc = doc || document;
-    if (doc.getElementById('kvc-card-css')) return;
-    var s = doc.createElement('style'); s.id = 'kvc-card-css'; s.textContent = CSS;
-    (doc.head || doc.documentElement).appendChild(s);
+    var put = function (id, css) {
+      var s = doc.getElementById(id);
+      if (s && s.getAttribute('data-v') === VERSION) return;
+      if (!s) { s = doc.createElement('style'); s.id = id; (doc.head || doc.documentElement).appendChild(s); }
+      s.setAttribute('data-v', VERSION);
+      s.textContent = css;
+    };
+    put('kvc-card-css', CSS);
+    if (extraId && extraCss) put(extraId, extraCss);
   }
 
   /* ── Página autónoma (para alojar en cualquier hosting) ─────────────── */
@@ -1021,18 +1209,22 @@ var KVC = (function () {
       '<meta property="og:description" content="' + htmlEsc(desc) + '">\n' +
       (extra.ogImage ? '<meta property="og:image" content="' + htmlEsc(extra.ogImage) + '">\n' : '') +
       (extra.canonical ? '<link rel="canonical" href="' + htmlEsc(extra.canonical) + '">\n' : '') +
-      (extra.icon ? '<link rel="icon" href="' + htmlEsc(extra.icon) + '">\n<link rel="apple-touch-icon" href="' + htmlEsc(extra.icon) + '">\n' : '') +
+      (extra.icon ? '<link rel="icon" href="' + htmlEsc(extra.icon) + '">\n<link rel="apple-touch-icon" href="' + htmlEsc(extra.touchIcon || extra.icon) + '">\n' : '') +
+      (extra.manifest ? '<link rel="manifest" href="' + htmlEsc(extra.manifest) + '">\n' : '') +
       '<meta name="apple-mobile-web-app-capable" content="yes">\n' +
       '<meta name="apple-mobile-web-app-title" content="' + htmlEsc(p.name.split(' ')[0] + ' · ' + (p.company || 'Tarjeta')) + '">\n' +
       '<style>html,body{margin:0;padding:0;background:#F8FAFC}#kvc-root{min-height:100vh;display:flex;flex-direction:column}#kvc-root>.kvc{flex:1}</style>\n' +
       '</head>\n<body>\n<div id="kvc-root"></div>\n<script>\n' + String(coreSrc).replace(/<\/(script)/gi, '<\\/$1').replace(/<!--/g, '<\\!--') + '\n' +
-      'KVC.injectCss();KVC.mount(document.getElementById("kvc-root"),' + json + ',{qrUrl:' + JSON.stringify(extra.qrUrl || '') + '||undefined});\n' +
+      'KVC.injectCss();KVC.mount(document.getElementById("kvc-root"),' + json + ',{qrUrl:' + JSON.stringify(extra.qrUrl || '') + '||undefined,' +
+        'leadEndpoint:' + JSON.stringify(extra.leadEndpoint || '') + ',statsEndpoint:' + JSON.stringify(extra.statsEndpoint || '') + ',source:"sitio propio"});\n' +
       '</script>\n</body>\n</html>\n';
   }
 
   return {
+    VERSION: VERSION,
     DEFAULT_PROFILE: DEFAULT_PROFILE,
     EMPTY_PROFILE: EMPTY_PROFILE,
+    shareImage: shareImage,
     vcardLite: vcardLite,
     localize: localize,
     tr: tr,

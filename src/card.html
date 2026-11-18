@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Tarjeta digital</title>
 <meta name="robots" content="noindex">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="generator" content="KIMOS vCard /*@@VERSION@@*/">
 <link rel="icon" href="logo-mark.png">
 <style>
@@ -49,8 +51,17 @@
         resolve: function (n) { return assetBase + n; },
         lang: qLang === 'en' || qLang === 'es' ? qLang : undefined,
         // «Déjame tus datos» llega a la app como prospecto (gateway public.submit).
-        leadEndpoint: j.data.leads === true ? api + '/api/public/app/' + encodeURIComponent(id) + '/submit/lead' : ''
+        leadEndpoint: j.data.leads === true ? api + '/api/public/app/' + encodeURIComponent(id) + '/submit/lead' : '',
+        // Medición (v1.3): una visita por apertura, con los canales tocados.
+        statsEndpoint: j.data.stats === true ? api + '/api/public/app/' + encodeURIComponent(id) + '/submit/visita' : '',
+        source: 'tarjeta KIMOS'
       });
+      // Atajo en la pantalla de inicio: ícono con la foto y nombre corto.
+      var icon = prof.photo ? (prof.photo.indexOf('asset:') === 0 ? assetBase + prof.photo.slice(6) : prof.photo) : '';
+      if (icon) { var l = document.createElement('link'); l.rel = 'apple-touch-icon'; l.href = icon; document.head.appendChild(l); }
+      var t = document.createElement('meta'); t.name = 'apple-mobile-web-app-title';
+      t.content = (prof.name || '').split(' ')[0] + (prof.company ? ' · ' + prof.company : ''); document.head.appendChild(t);
+      var c = document.createElement('meta'); c.name = 'theme-color'; c.content = (prof.theme && prof.theme.primary) || '#0052FF'; document.head.appendChild(c);
     })
     .catch(function (e) { fail(e && e.message ? e.message : 'No se pudo cargar la tarjeta.'); });
 })();

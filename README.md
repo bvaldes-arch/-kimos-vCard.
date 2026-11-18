@@ -14,7 +14,7 @@ empresa, la app asume su identidad desde el registro de marcas de KIMOS
 
 | Archivo | Qué es |
 |---|---|
-| [`kimos-vcard-1.2.0.kapp`](kimos-vcard-1.2.0.kapp) | La app para KIMOS: Tienda → *Instalar desde archivo* (superadmin). |
+| [`kimos-vcard-1.3.0.kapp`](kimos-vcard-1.3.0.kapp) | La app para KIMOS: Tienda → *Instalar desde archivo* (superadmin). |
 | [`docs/index.html`](docs/index.html) | La tarjeta pública autónoma (lo que se abre al escanear). Publicada con GitHub Pages. |
 | [`docs/Bryan_Valdes_FIGIT_Tarjeta_Digital.pdf`](docs/Bryan_Valdes_FIGIT_Tarjeta_Digital.pdf) | PDF interactivo: QR protagonista + botones con enlace (WhatsApp, contacto, correo, LinkedIn, web, Instagram, llamar, ubicación) y la tarjeta ejecutiva. |
 | [`docs/contacto.vcf`](docs/contacto.vcf) | Contacto con foto, enlazado desde el PDF («Guardar contacto»). |
@@ -43,6 +43,18 @@ KVC_PUBLIC_URL=https://figit.ai/bryan/ node tools/make-pdf.mjs
 Dentro de KIMOS no hace falta nada de esto: al **Publicar**, el QR apunta a
 `{tu KIMOS}/api/apps/kimos-vcard/asset/card.html?i={documento}`, que sirve el
 propio KIMOS. El botón **Probar el QR** comprueba que ese enlace abre tu tarjeta.
+
+## Novedades 1.3 «Medición»
+
+- **Todo formulario llega a Prospectos**: la página de KIMOS, la vista previa
+  de la app y el HTML exportado aunque viva en otro dominio.
+- **Medición**: aperturas, toques por canal, contactos guardados, prospectos y
+  conversión, sin cookies.
+- **Imagen para compartir** (vista previa del enlace en WhatsApp y LinkedIn) y
+  **agregar a inicio** del teléfono.
+- Para que `docs/` (GitHub Pages) también registre prospectos: copia el
+  «Enlace para formularios externos» de la pestaña Publicar en
+  `package.json → kvc.gateway` y ejecuta `node tools/build.mjs`.
 
 ## Novedades 1.2 «Captura»
 

@@ -421,3 +421,9 @@
   background: color-mix(in srgb, var(--kvc-wa) 8%, var(--kvc-tile)); border: 1px solid color-mix(in srgb, var(--kvc-wa) 35%, transparent); }
 .kvc .kvc-lead-thanks .kvc-lead-ok { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-size: 20px; color: var(--kvc-on); background: var(--kvc-wa); }
 @container (max-width: 400px) { .kvc .kvc-lead-form { grid-template-columns: 1fr; } }
+/* ── v1.3 ── */
+.kvc .kvc-lead-fallback { grid-column: 1 / -1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 14px; border-radius: 12px; font-size: 13px; font-weight: 700;
+  color: var(--kvc-on); background: linear-gradient(135deg, var(--kvc-wa-brand), var(--kvc-wa)); }
+.kvc .kvc-home { display: grid; gap: 10px; margin-bottom: 14px; }
+.kvc .kvc-home-step { display: grid; gap: 2px; padding: 12px; border-radius: 12px; background: var(--kvc-tile); border: 1px solid var(--kvc-line); font-size: 13px; color: var(--kvc-text-2); }
+.kvc .kvc-home-step strong { color: var(--kvc-text); }

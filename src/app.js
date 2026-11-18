@@ -16,7 +16,34 @@
 const APP_VERSION = '1.0.0';
 const APP_ID = 'kimos-vcard';
 
-/*@@CORE@@*/
+// Estilos de la app, también inyectados desde JS con su versión: KIMOS no
+// recarga la página al actualizar una app y dejaba la hoja anterior.
+const APP_CSS = /*@@APPCSS@@*/ '';
+
+/* ── Un solo núcleo (v1.3) ──
+   El núcleo de la tarjeta (interfaz, QR, vCard) vive en assets/kvc-core.js y
+   lo comparten la app, la página pública y el HTML exportado. Se carga una vez
+   y se exige que su versión sea la de la app. */
+function loadCore(shell) {
+  const want = APP_VERSION;
+  const g = globalThis;
+  if (g.KVC && g.KVC.VERSION === want) return Promise.resolve(g.KVC);
+  if (g.__kvcCoreLoading && g.__kvcCoreLoading.v === want) return g.__kvcCoreLoading.p;
+  const p = new Promise((resolve, reject) => {
+    let url;
+    try { url = shell.assetUrl('kvc-core.js'); } catch (e) { reject(new Error('Este KIMOS no sirve los archivos de la app.')); return; }
+    const sc = document.createElement('script');
+    sc.src = url + (url.indexOf('?') < 0 ? '?' : '&') + 'v=' + encodeURIComponent(want);
+    sc.async = true;
+    sc.onload = () => (g.KVC && g.KVC.VERSION === want
+      ? resolve(g.KVC)
+      : reject(new Error('El núcleo cargado (v' + ((g.KVC && g.KVC.VERSION) || '?') + ') no coincide con la app v' + want + '. Recarga la página.')));
+    sc.onerror = () => { g.__kvcCoreLoading = null; reject(new Error('No se pudo cargar kvc-core.js. Reinstala la app desde la Tienda.')); };
+    document.head.appendChild(sc);
+  });
+  g.__kvcCoreLoading = { v: want, p };
+  return p;
+}
 
 const TABS = [
   { id: 'perfil', label: 'Perfil' },
@@ -24,6 +51,7 @@ const TABS = [
   { id: 'marca', label: 'Marca' },
   { id: 'publicar', label: 'Publicar' },
   { id: 'prospectos', label: 'Prospectos' },
+  { id: 'medicion', label: 'Medición' },
 ];
 
 /* ── Marca de la empresa (shell.brands) → tarjeta ──────────────────────
@@ -131,6 +159,54 @@ function blobToDataUrl(blob) {
   return new Promise((resolve) => { const fr = new FileReader(); fr.onload = () => resolve(fr.result); fr.onerror = () => resolve(''); fr.readAsDataURL(blob); });
 }
 
+/* ── Medición (v1.3) ──
+   Resume las visitas que manda la tarjeta pública (canal 'visita') y los
+   prospectos de un periodo. `days` = 0 → todo el historial. */
+const CHANNELS = [
+  ['whatsapp', 'WhatsApp'], ['email', 'Correo'], ['linkedin', 'LinkedIn'], ['website', 'Sitio web'],
+  ['instagram', 'Instagram'], ['phone', 'Llamar'], ['maps', 'Ubicación'],
+];
+function summarize(visits, leads, days, now) {
+  const end = now ? new Date(now) : new Date();
+  const from = days ? new Date(end.getTime() - days * 86400000) : null;
+  const inRange = (iso) => { const t = Date.parse(iso || ''); return !isNaN(t) && (!from || t >= from.getTime()); };
+  const vs = (visits || []).filter((v) => inRange(v.at));
+  // Los envíos de prueba desde la vista previa no cuentan como prospectos reales.
+  const ls = (leads || []).filter((l) => inRange(l.createdAt) && ((l.data || {}).source || '') !== 'vista previa');
+  const clicks = {};
+  CHANNELS.forEach(([k]) => { clicks[k] = 0; });
+  let opens = 0, saved = 0, shared = 0, qr = 0, mobile = 0, en = 0, touched = 0;
+  const refs = {};
+  vs.forEach((v) => {
+    const d = v.d || {};
+    if (d.visit === '1') {
+      opens++;
+      if (d.mobile === '1') mobile++;
+      if (d.lang === 'en') en++;
+      const r = d.ref ? String(d.ref).replace(/^www\./, '') : 'Directo o QR';
+      refs[r] = (refs[r] || 0) + 1;
+    }
+    const cs = String(d.clicks || '').split(',').filter(Boolean);
+    if (cs.length) touched++;
+    cs.forEach((c) => { if (c in clicks) clicks[c]++; });
+    if (d.saved === '1') saved++;
+    if (d.shared === '1') shared++;
+    if (d.qr === '1') qr++;
+  });
+  const n = days || 30;
+  const daily = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const day = new Date(end.getTime() - i * 86400000).toISOString().slice(0, 10);
+    daily.push({ day, opens: vs.filter((v) => (v.d || {}).visit === '1' && String(v.at).slice(0, 10) === day).length });
+  }
+  const totalClicks = Object.keys(clicks).reduce((a, k) => a + clicks[k], 0);
+  return {
+    opens, totalClicks, clicks, saved, shared, qr, leads: ls.length,
+    conversion: opens ? Math.min(100, Math.round((ls.length / opens) * 1000) / 10) : 0,
+    mobile, en, refs, daily, touched,
+  };
+}
+
 export default function mount(shell) {
   const React = globalThis.React;
   const h = React.createElement;
@@ -139,11 +215,14 @@ export default function mount(shell) {
   const instanceId = (shell.app && shell.app.instanceId) || '';
   const resolveAsset = (name) => { try { return shell.assetUrl(name); } catch (e) { return name; } };
 
+  let KVC = null;
+  let coreErr = '';
+
   /* ── Estado (un modelo en el closure; UI y agente mutan lo mismo) ── */
-  let model = { profile: KVC.normalize(KVC.DEFAULT_PROFILE), published: false, publishedAt: '', loaded: false };
+  let model = { profile: null, published: false, publishedAt: '', loaded: false };
   let ui = { tab: 'perfil', device: 'mobile', busy: '', error: '' };
   const listeners = new Set();
-  let leads = { list: [], loaded: false, error: '' };
+  let leads = { list: [], visits: [], loaded: false, error: '' };
   const emit = () => listeners.forEach((l) => l({ model, ui, leads }));
   let saveT = null;
   let pubT = null;
@@ -292,6 +371,10 @@ export default function mount(shell) {
   }
 
   /* ── Enlace público ── */
+  function gatewayUrl(channel) {
+    if (!instanceId) return '';
+    return baseApi(shell) + '/api/public/app/' + encodeURIComponent(instanceId) + '/submit/' + channel;
+  }
   function kimosUrl() {
     if (!instanceId) return '';
     return baseApi(shell) + '/api/apps/' + APP_ID + '/asset/card.html?i=' + encodeURIComponent(instanceId);
@@ -352,10 +435,10 @@ export default function mount(shell) {
       public: {
         enabled: !!enabled,
         // «Déjame tus datos»: el gateway acepta envíos solo en el canal 'lead'.
-        channels: model.profile.leadForm === 'on' ? ['lead'] : [],
+        channels: [].concat(model.profile.leadForm === 'on' ? ['lead'] : [], model.profile.stats === 'on' ? ['visita'] : []),
         // Lo que ve el mundo: SOLO la tarjeta. Es información de contacto
         // pensada para compartirse; nada más de la instancia sale de aquí.
-        data: enabled ? { profile: model.profile, leads: model.profile.leadForm === 'on', app: APP_ID, version: APP_VERSION } : {},
+        data: enabled ? { profile: model.profile, leads: model.profile.leadForm === 'on', stats: model.profile.stats === 'on', app: APP_ID, version: APP_VERSION } : {},
       },
     };
     try {
@@ -380,12 +463,14 @@ export default function mount(shell) {
     if (!instanceId || !shell.items || disposed) return;
     try {
       const all = await shell.items.list();
-      const list = (all || [])
-        .filter((it) => it && it.id !== 'definition' && (it.kind || '') === 'submission' && it.channel === 'lead')
+      const subs = (all || []).filter((it) => it && it.id !== 'definition' && (it.kind || '') === 'submission');
+      const list = subs
+        .filter((it) => it.channel === 'lead')
         .map((it) => Object.assign({}, it, { data: it.data || {} }))
         .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
-      const sig = JSON.stringify(list.map((l) => [l.id, l.status, l.recordRef || '']));
-      if (sig !== leads.sig || !leads.loaded) { leads = { list, loaded: true, error: '', sig }; emit(); }
+      const visits = subs.filter((it) => it.channel === 'visita').map((it) => ({ at: it.createdAt || '', d: it.data || {} }));
+      const sig = JSON.stringify(list.map((l) => [l.id, l.status, l.recordRef || ''])) + '|' + visits.length;
+      if (sig !== leads.sig || !leads.loaded) { leads = { list, visits, loaded: true, error: '', sig }; emit(); }
     } catch (e) {
       leads = Object.assign({}, leads, { loaded: true, error: 'No se pudieron leer los prospectos: ' + String((e && e.message) || e) });
       emit();
@@ -420,7 +505,7 @@ export default function mount(shell) {
   }
   const leadsTimer = setInterval(() => {
     if (typeof document === 'undefined' || document.visibilityState !== 'hidden') void loadLeads();
-  }, 30000);
+  }, 15000);
 
   async function exportHtml() {
     setUi({ busy: 'export' });
@@ -438,7 +523,23 @@ export default function mount(shell) {
       }
       // El QR del HTML exportado apunta al enlace público real (dominio propio
       // o la página de KIMOS), nunca a «donde se abra el archivo».
-      const html = KVC.standaloneHtml(p, coreSrc, { qrUrl: qrTarget() });
+      // Imagen para compartir: con shell.files queda en una URL pública y el
+      // HTML la declara como og:image (vista previa en WhatsApp y LinkedIn).
+      let ogImage = '';
+      if (shell.files && shell.files.upload) {
+        try {
+          const blob = await KVC.shareImage(p, { qrUrl: qrTarget() });
+          ogImage = await shell.files.upload(new File([blob], 'compartir.png', { type: 'image/png' }), { folder: 'tarjeta', maxMB: 3 });
+        } catch (e) { ogImage = ''; }
+      }
+      // Publicada: el HTML alojado fuera de KIMOS manda prospectos y visitas a
+      // esta app por el gateway público (CORS abierto en /api/public/*).
+      const live = model.published;
+      const html = KVC.standaloneHtml(p, coreSrc, {
+        qrUrl: qrTarget(), ogImage,
+        leadEndpoint: live && p.leadForm === 'on' ? gatewayUrl('lead') : '',
+        statsEndpoint: live && p.stats === 'on' ? gatewayUrl('visita') : '',
+      });
       KVC.download(KVC.slug(p.name) + '_tarjeta.html', new Blob([html], { type: 'text/html;charset=utf-8' }));
       shell.notify({ level: 'success', text: 'HTML exportado: súbelo como index.html a tu dominio.' });
     } catch (e) {
@@ -460,13 +561,15 @@ export default function mount(shell) {
       tools: [
         { name: 'GET_CARD', description: 'Devuelve los datos de la tarjeta, si está publicada y el enlace del QR.', inputSchema: { type: 'object', properties: {} } },
         { name: 'UPDATE_CARD', description: 'Actualiza campos de la tarjeta. Solo se cambian los campos enviados. whatsapp va en dígitos con código de país (56987161097).', inputSchema: { type: 'object', properties: props } },
+        { name: 'GET_STATS', description: 'Medición de la tarjeta: aperturas, toques por canal (WhatsApp, correo, LinkedIn, web, Instagram, llamar, ubicación), contactos guardados y prospectos. days: 7, 30, 90 o 0 (todo).', inputSchema: { type: 'object', properties: { days: { type: 'number' } } } },
         { name: 'LIST_LEADS', description: 'Lista los prospectos que dejaron sus datos en la tarjeta (nombre, empresa, correo, teléfono, mensaje, estado).', inputSchema: { type: 'object', properties: {} } },
         { name: 'SET_PUBLISHED', description: 'Publica (true) o despublica (false) la página pública que abre el QR.', inputSchema: { type: 'object', properties: { published: { type: 'boolean' } }, required: ['published'] } },
       ],
-      getSnapshot: () => ({
+      getSnapshot: () => (!model.profile ? { app: APP_ID, version: APP_VERSION, loading: true } : {
         app: APP_ID, version: APP_VERSION, profile: Object.assign({}, model.profile, {
           photo: model.profile.photo ? '(imagen)' : '', logo: '(imagen)', logoMark: '(imagen)', logoWord: '(imagen)',
         }), published: model.published, qrUrl: qrTarget(), kimosPublicUrl: kimosUrl(),
+        stats: KVC ? summarize(leads.visits, leads.list, 30) : null,
       }),
       dispatchAction: async (action) => {
         const t = action && action.type;
@@ -478,6 +581,13 @@ export default function mount(shell) {
           if (!Object.keys(patch).length) return { success: false, error: 'No llegó ningún campo editable.' };
           updateProfile(patch);
           return { success: true, message: 'Tarjeta actualizada: ' + Object.keys(patch).join(', ') };
+        }
+        if (t === 'GET_STATS') {
+          await loadLeads();
+          const days = [7, 30, 90, 0].indexOf(Number(pl.days)) >= 0 ? Number(pl.days) : 30;
+          const st = summarize(leads.visits, leads.list, days);
+          delete st.daily;
+          return { success: true, message: JSON.stringify(Object.assign({ periodo: days ? days + ' días' : 'todo' }, st)) };
         }
         if (t === 'LIST_LEADS') {
           await loadLeads();
@@ -495,14 +605,23 @@ export default function mount(shell) {
   if (shell.documents) {
     try {
       shell.documents.onSerialize(() => ({ profile: model.profile }));
-      shell.documents.onLoad((cfg) => { if (cfg && cfg.profile) commit({ profile: KVC.normalize(cfg.profile) }); });
+      shell.documents.onLoad((cfg) => { if (cfg && cfg.profile && KVC) commit({ profile: KVC.normalize(cfg.profile) }); });
     } catch (e) { /* host sin documentos */ }
   }
 
-  KVC.injectCss();
-  void load();
-  void loadBrands();
-  void loadLeads();
+  loadCore(shell).then((core) => {
+    if (disposed) return;
+    KVC = core;
+    KVC.injectCss(document, 'kvcx-app-css', APP_CSS);
+    model = Object.assign({}, model, { profile: KVC.normalize(KVC.DEFAULT_PROFILE) });
+    emit();
+    void load();
+    void loadBrands();
+    void loadLeads();
+  }).catch((e) => {
+    coreErr = String((e && e.message) || e);
+    emit();
+  });
 
   /* ── Componentes ── */
   function Field(props) {
@@ -560,7 +679,13 @@ export default function mount(shell) {
       if (!ref.current) return undefined;
       let inst = null;
       const t = setTimeout(() => {
-        inst = KVC.mount(ref.current, profile, { preview: true, storage: false, resolve: resolveAsset, qrUrl, leadEndpoint: leadsOn ? 'preview' : '' });
+        inst = KVC.mount(ref.current, profile, {
+          preview: true, storage: false, resolve: resolveAsset, qrUrl,
+          // Publicada: el formulario de la vista previa envía de verdad (queda
+          // marcado «vista previa») y el prospecto aparece al instante.
+          leadEndpoint: leadsOn && profile.leadForm === 'on' ? gatewayUrl('lead') : '',
+          onLead: () => { void loadLeads(); shell.notify({ level: 'success', text: 'Prospecto registrado en la pestaña Prospectos.' }); },
+        });
       }, 180);
       return () => { clearTimeout(t); if (inst) inst.destroy(); };
     }, [key]);
@@ -624,7 +749,13 @@ export default function mount(shell) {
           KVC.qrPng(KVC.vcardLite(m.profile), { dark: m.profile.theme.ink, px: 1400, ec: 'M' })
             .then((b) => KVC.download('QR_sin_internet_' + KVC.slug(m.profile.name) + '.png', b))
             .catch(() => shell.notify({ level: 'error', text: 'No se pudo generar el QR sin internet' }));
-        } }, 'QR sin internet (PNG)')));
+        } }, 'QR sin internet (PNG)')),
+      m.published && instanceId ? h('div', { className: 'kvcx-qr-meta' },
+        h('span', { className: 'kvcx-label' }, 'Enlace para formularios externos'),
+        h('code', { className: 'kvcx-url' }, gatewayUrl('')),
+        h('small', { className: 'kvcx-help' }, 'Si tu tarjeta vive en otro sitio (GitHub Pages, figit.ai), este enlace conecta su formulario y su medición con esta app.')) : null,
+      m.published ? h('p', { className: 'kvcx-help' }, 'El HTML exportado lleva el formulario y la medición conectados a esta app: aunque lo subas a tu dominio o a GitHub Pages, cada prospecto y cada visita llegan aquí.') : null,
+      h(ShareImage, { m }));
   }
 
   function BrandPicker({ p }) {
@@ -725,10 +856,95 @@ export default function mount(shell) {
       })));
   }
 
+  function ShareImage({ m }) {
+    const [url, setUrl] = useState('');
+    const [busy, setBusy] = useState(false);
+    const blobRef = useRef(null);
+    useEffect(() => () => { if (url) URL.revokeObjectURL(url); }, [url]);
+    const make = async () => {
+      setBusy(true);
+      try {
+        const b = await KVC.shareImage(m.profile, { qrUrl: qrTarget(), resolve: resolveAsset });
+        blobRef.current = b;
+        setUrl(URL.createObjectURL(b));
+      } catch (e) { shell.notify({ level: 'error', text: 'No se pudo crear la imagen: ' + String((e && e.message) || e) }); }
+      setBusy(false);
+    };
+    return h('div', { className: 'kvcx-share' },
+      h('div', null,
+        h('strong', null, 'Imagen para compartir'),
+        h('small', null, 'La vista previa que aparece al enviar tu enlace por WhatsApp, LinkedIn o correo (1200 × 630). Va incluida en el HTML exportado.')),
+      url ? h('img', { src: url, alt: 'Vista previa al compartir', className: 'kvcx-share-img' }) : null,
+      h('div', { className: 'kvcx-row kvcx-wrap' },
+        h('button', { type: 'button', className: 'kvcx-btn', disabled: busy, onClick: make }, busy ? 'Creando…' : url ? 'Actualizar imagen' : 'Crear imagen'),
+        url ? h('button', { type: 'button', className: 'kvcx-btn', onClick: () => KVC.download('compartir_' + KVC.slug(m.profile.name) + '.png', blobRef.current) }, 'Descargar PNG') : null));
+  }
+
+  function StatsPane({ l, m }) {
+    const [days, setDays] = useState(30);
+    useEffect(() => { void loadLeads(); }, []);
+    const st = summarize(l.visits, l.list, days);
+    const pct = (a, b) => (b ? Math.round((a / b) * 100) : 0);
+    const maxC = Math.max(1, ...CHANNELS.map(([k]) => st.clicks[k]));
+    const maxD = Math.max(1, ...st.daily.map((d) => d.opens));
+    const kpi = (label, value, sub) => h('div', { className: 'kvcx-kpi' }, h('span', null, label), h('strong', null, String(value)), sub ? h('small', null, sub) : null);
+    const refs = Object.keys(st.refs).sort((a, b) => st.refs[b] - st.refs[a]).slice(0, 5);
+    const W = 560, H = 120, bw = W / st.daily.length;
+    return h('div', { className: 'kvcx-pane' },
+      m.profile.stats !== 'on' ? h('p', { className: 'kvcx-warn' }, 'La medición está apagada (pestaña Canales).') : null,
+      !m.published ? h('p', { className: 'kvcx-warn' }, 'Publica la tarjeta para empezar a medir.') : null,
+      h('div', { className: 'kvcx-row kvcx-wrap' },
+        h('div', { className: 'kvcx-seg' }, [[7, '7 días'], [30, '30 días'], [90, '90 días'], [0, 'Todo']].map(([d, t]) =>
+          h('button', { key: t, type: 'button', className: days === d ? 'kvcx-on' : '', onClick: () => setDays(d) }, t))),
+        h('button', { type: 'button', className: 'kvcx-btn kvcx-btn-ghost', onClick: loadLeads }, 'Actualizar')),
+      h('div', { className: 'kvcx-kpis' },
+        kpi('Aperturas', st.opens, st.mobile ? pct(st.mobile, st.opens) + '% desde el teléfono' : null),
+        kpi('Toques en canales', st.totalClicks, st.opens ? pct(st.touched, st.opens) + '% de las visitas tocó alguno' : null),
+        kpi('Contactos guardados', st.saved, '.vcf descargados'),
+        kpi('Prospectos', st.leads, st.opens ? st.conversion + '% de las aperturas' : null)),
+      st.opens === 0 && st.totalClicks === 0 ? h('div', { className: 'kvcx-empty' },
+        h('strong', null, 'Aún no hay visitas en este periodo'),
+        h('small', null, 'Cada vez que alguien abra tu tarjeta (escaneando el QR o desde el enlace) se suma aquí, junto con los canales que toque.')) : null,
+      h('section', { className: 'kvcx-chart' },
+        h('h4', null, 'Toques por canal'),
+        h('div', { className: 'kvcx-bars' }, CHANNELS.map(([k, label]) =>
+          h('div', { key: k, className: 'kvcx-bar-row' },
+            h('span', { className: 'kvcx-bar-l' }, label),
+            h('span', { className: 'kvcx-bar-t' }, h('span', { className: 'kvcx-bar-f' + (k === 'whatsapp' ? ' kvcx-bar-wa' : ''), style: { width: (st.clicks[k] / maxC) * 100 + '%' } })),
+            h('span', { className: 'kvcx-bar-v' }, String(st.clicks[k])))))),
+      h('section', { className: 'kvcx-chart' },
+        h('h4', null, 'Aperturas por día · últimos ' + (days || 30) + ' días'),
+        h('div', { className: 'kvcx-days' },
+          h('svg', { viewBox: '0 0 ' + W + ' ' + (H + 18), preserveAspectRatio: 'none', role: 'img', 'aria-label': 'Aperturas por día' },
+            h('line', { x1: 0, x2: W, y1: H, y2: H, className: 'kvcx-axis' }),
+            st.daily.map((d, i) => {
+              const hh = (d.opens / maxD) * (H - 8);
+              return h('rect', { key: d.day, x: i * bw + bw * 0.15, y: H - hh, width: Math.max(1, bw * 0.7), height: Math.max(d.opens ? 2 : 0, hh), rx: 2, className: 'kvcx-day' },
+                h('title', null, d.day + ': ' + d.opens));
+            }),
+            h('text', { x: 0, y: H + 14, className: 'kvcx-axis-t' }, st.daily[0] ? st.daily[0].day.slice(5) : ''),
+            h('text', { x: W, y: H + 14, textAnchor: 'end', className: 'kvcx-axis-t' }, st.daily.length ? st.daily[st.daily.length - 1].day.slice(5) : ''),
+            h('text', { x: 4, y: 12, className: 'kvcx-axis-t' }, 'máx. ' + maxD)))),
+      h('div', { className: 'kvcx-kpis kvcx-kpis-3' },
+        kpi('En inglés', st.opens ? pct(st.en, st.opens) + '%' : '—', st.en + ' aperturas'),
+        kpi('Compartida', st.shared, 'veces desde la tarjeta'),
+        kpi('QR descargado', st.qr, 'PNG desde la tarjeta')),
+      refs.length ? h('section', { className: 'kvcx-chart' },
+        h('h4', null, 'De dónde llegan'),
+        h('ul', { className: 'kvcx-refs' }, refs.map((r) => h('li', { key: r }, h('span', null, r), h('strong', null, String(st.refs[r])))))) : null,
+      h('p', { className: 'kvcx-help' }, 'Una apertura cuenta una vez por visita. «Directo o QR» incluye los escaneos y los enlaces abiertos desde WhatsApp, que no informan su origen.'));
+  }
+
   function Component() {
     const [st, setSt] = useState({ model, ui, leads });
     useEffect(() => { listeners.add(setSt); return () => listeners.delete(setSt); }, []);
     const m = st.model, u = st.ui, p = m.profile;
+    if (!KVC || !p) {
+      return h('div', { className: 'kimos-vcard' },
+        h('div', { className: 'kvcx-boot' },
+          h('strong', null, coreErr ? 'No se pudo abrir KIMOS vCard' : 'Abriendo KIMOS vCard…'),
+          coreErr ? h('small', null, coreErr) : null));
+    }
     const pane = {
       perfil: h('div', { className: 'kvcx-pane' },
         h(TemplatePicker, null),
@@ -757,6 +973,10 @@ export default function mount(shell) {
             h('input', { type: 'checkbox', checked: p.leadForm === 'on', onChange: (e) => updateProfile({ leadForm: e.target.checked ? 'on' : 'off' }) }),
             h('span', null, h('strong', null, 'Formulario «Déjame tus datos»'),
               h('small', null, 'Quien escanea puede dejarte nombre, empresa, correo y teléfono. Llegan a la pestaña Prospectos.'))),
+          h('label', { className: 'kvcx-check kvcx-wide' },
+            h('input', { type: 'checkbox', checked: p.stats === 'on', onChange: (e) => updateProfile({ stats: e.target.checked ? 'on' : 'off' }) }),
+            h('span', null, h('strong', null, 'Medición'),
+              h('small', null, 'Cuenta aperturas de la tarjeta y toques en cada canal. Sin cookies ni datos personales de quien la abre.'))),
           h(Field, { label: 'Correo', k: 'email', profile: p, type: 'email' }),
           h(Field, { label: 'Sitio web', k: 'website', profile: p, type: 'url' }),
           h(Field, { label: 'LinkedIn', k: 'linkedin', profile: p, type: 'url' }),
@@ -784,6 +1004,7 @@ export default function mount(shell) {
           h(Field, { label: 'Tipografía', k: 'font', profile: p, help: 'Familia de la marca (si está instalada en el equipo).' }))),
       publicar: h(PublishPane, { m }),
       prospectos: h(LeadsPane, { l: st.leads, m }),
+      medicion: h(StatsPane, { l: st.leads, m }),
     }[u.tab];
 
     return h('div', { className: 'kimos-vcard' },
@@ -793,7 +1014,7 @@ export default function mount(shell) {
           h('span', { className: 'kvcx-ver', title: 'KIMOS vCard v' + APP_VERSION }, 'v' + APP_VERSION),
           m.published ? h('span', { className: 'kvcx-pill-ok' }, '● Publicada') : null),
         h('nav', { className: 'kvcx-tabs' }, TABS.map((t) =>
-          h('button', { key: t.id, type: 'button', className: 'kvcx-tab' + (u.tab === t.id ? ' kvcx-tab-on' : ''), onClick: () => { setUi({ tab: t.id }); if (t.id === 'prospectos') void loadLeads(); } },
+          h('button', { key: t.id, type: 'button', className: 'kvcx-tab' + (u.tab === t.id ? ' kvcx-tab-on' : ''), onClick: () => { setUi({ tab: t.id }); if (t.id === 'prospectos' || t.id === 'medicion') void loadLeads(); } },
             t.label,
             t.id === 'prospectos' && newLeads(st.leads) ? h('span', { className: 'kvcx-badge' }, newLeads(st.leads)) : null))),
         h('div', { className: 'kvcx-actions' },
