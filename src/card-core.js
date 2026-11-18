@@ -65,6 +65,10 @@ var KVC = (function () {
     mottoEn: 'Strategic Artificial Intelligence, Predictive Models and High-Impact Automation.',
     leadForm: 'on',
     stats: 'on',
+    // Wallet (v2.0): enlaces a un pase YA firmado (ver tools/wallet.mjs). Solo
+    // guardan la tarjeta de contacto; nada que ver con pagos.
+    walletApple: '',
+    walletGoogle: '',
     theme: { primary: '#0052FF', ink: '#0D366B', soft: '#DDF0FF', accent: '#00D2FF' }
   };
 
@@ -81,7 +85,7 @@ var KVC = (function () {
   var FIELDS = ['name', 'firstName', 'lastName', 'title', 'company', 'tagline', 'phone', 'whatsapp',
     'whatsappMsg', 'email', 'website', 'linkedin', 'instagram', 'address', 'city', 'region', 'country',
     'photo', 'logo', 'logoMark', 'logoWord', 'publicUrl', 'cardId', 'motto', 'location', 'hashtag', 'font', 'brandId', 'brandName',
-    'titleEn', 'taglineEn', 'whatsappMsgEn', 'mottoEn', 'leadForm', 'stats'];
+    'titleEn', 'taglineEn', 'whatsappMsgEn', 'mottoEn', 'leadForm', 'stats', 'walletApple', 'walletGoogle'];
 
   function str(v, max) {
     if (v === null || v === undefined) return '';
@@ -103,6 +107,7 @@ var KVC = (function () {
     out.font = out.font.replace(/[^\w \-]/g, '').slice(0, 60);
     out.leadForm = out.leadForm === 'off' ? 'off' : 'on';
     out.stats = out.stats === 'off' ? 'off' : 'on';
+    ['walletApple', 'walletGoogle'].forEach(function (k) { if (out[k] && !/^https:\/\//i.test(out[k])) out[k] = ''; });
     var t = p.theme || {};
     out.theme = {};
     Object.keys(DEFAULT_PROFILE.theme).forEach(function (k) {
@@ -212,6 +217,11 @@ var KVC = (function () {
   EN['Android (Chrome)'] = 'Android (Chrome)';
   EN['Toca ⋮ y luego «Agregar a la pantalla principal».'] = 'Tap ⋮, then “Add to Home screen”.';
   EN['Agregar ahora'] = 'Add now';
+  EN['Agregar a'] = 'Add to'; EN['Guardar en'] = 'Save to';
+  EN['Grabar en tarjeta NFC'] = 'Write to NFC tag';
+  EN['Acerca la etiqueta NFC a la parte trasera del teléfono…'] = 'Hold the NFC tag to the back of the phone…';
+  EN['Listo: la etiqueta abre '] = 'Done: the tag opens '; EN['tu contacto'] = 'your contact'; EN['tu tarjeta'] = 'your card';
+  EN['No se pudo grabar: '] = 'Could not write: ';
   function tr(lang, s) { return lang === 'en' && EN[s] ? EN[s] : s; }
   function pickLang(opts) {
     if (opts && (opts.lang === 'es' || opts.lang === 'en')) return opts.lang;
@@ -225,6 +235,91 @@ var KVC = (function () {
     var o = {}; Object.keys(p).forEach(function (k) { o[k] = p[k]; });
     ['title', 'tagline', 'whatsappMsg', 'motto'].forEach(function (k) { if (p[k + 'En']) o[k] = p[k + 'En']; });
     return o;
+  }
+
+  /* ── Equipo (v2.0) ──
+     Una instancia puede publicar la tarjeta de cada persona del equipo. Lo
+     personal es de cada uno; marca, empresa, web, dirección e Instagram de la
+     empresa se comparten con la tarjeta principal. */
+  var PERSONAL_KEYS = ['name', 'firstName', 'lastName', 'title', 'titleEn', 'tagline', 'taglineEn', 'phone', 'whatsapp',
+    'whatsappMsg', 'whatsappMsgEn', 'email', 'linkedin', 'photo', 'cardId', 'walletApple', 'walletGoogle'];
+  function teamMerge(main, personal) {
+    var o = {};
+    var m = normalize(main);
+    Object.keys(m).forEach(function (k) { o[k] = m[k]; });
+    PERSONAL_KEYS.forEach(function (k) { o[k] = ''; });
+    Object.keys(personal || {}).forEach(function (k) { if (PERSONAL_KEYS.indexOf(k) >= 0 && personal[k] != null) o[k] = personal[k]; });
+    if (!o.whatsappMsg && o.name) o.whatsappMsg = 'Hola ' + o.name.split(' ')[0] + ', te contacto desde tu tarjeta digital ' + (o.company || '') + '.';
+    if (!o.whatsappMsgEn && o.name) o.whatsappMsgEn = 'Hi ' + o.name.split(' ')[0] + ", I'm reaching out from your " + (o.company || '') + ' digital card.';
+    return normalize(o);
+  }
+
+  /* ── Wallet (v2.0): contenido del pase, sin firmar ──
+     Apple: pase «generic» (no es de pago ni de fidelización). Google: «Generic
+     pass». Ambos guardan SOLO la tarjeta de contacto: nombre, cargo, empresa,
+     contacto y el QR que abre la tarjeta digital. La firma la hace
+     tools/wallet.mjs con los certificados del emisor, fuera del navegador. */
+  function hexToRgb(hx) { var n = parseInt(String(hx).slice(1), 16); return 'rgb(' + ((n >> 16) & 255) + ', ' + ((n >> 8) & 255) + ', ' + (n & 255) + ')'; }
+  function walletApplePass(p, o) {
+    o = o || {};
+    var L = links(p);
+    var back = [];
+    if (L.whatsapp) back.push({ key: 'whatsapp', label: 'WhatsApp', value: p.phone || ('+' + p.whatsapp), attributedValue: '<a href="' + L.whatsapp.split('?')[0] + '">' + (p.phone || ('+' + p.whatsapp)) + '</a>' });
+    if (p.email) back.push({ key: 'email', label: 'Correo', value: p.email });
+    if (L.website) back.push({ key: 'web', label: 'Sitio web', value: L.website });
+    if (L.linkedin) back.push({ key: 'linkedin', label: 'LinkedIn', value: L.linkedin });
+    if (L.instagram) back.push({ key: 'instagram', label: 'Instagram', value: L.instagram });
+    if (p.address) back.push({ key: 'address', label: 'Dirección', value: p.address });
+    if (o.cardUrl) back.push({ key: 'card', label: 'Tarjeta digital', value: o.cardUrl });
+    return {
+      formatVersion: 1,
+      passTypeIdentifier: o.passTypeIdentifier || 'pass.com.example.vcard',
+      teamIdentifier: o.teamIdentifier || 'TEAMID0000',
+      serialNumber: o.serialNumber || ('vcard-' + slug(p.name).toLowerCase()),
+      organizationName: p.company || p.name,
+      description: 'Tarjeta de contacto de ' + p.name,
+      logoText: p.company || '',
+      foregroundColor: 'rgb(255, 255, 255)',
+      labelColor: 'rgb(220, 235, 255)',
+      backgroundColor: hexToRgb(p.theme.primary),
+      sharingProhibited: false,
+      barcodes: o.cardUrl ? [{ format: 'PKBarcodeFormatQR', message: o.cardUrl, messageEncoding: 'iso-8859-1', altText: 'Escanea mi tarjeta' }] : [],
+      generic: {
+        primaryFields: [{ key: 'name', label: p.company || '', value: p.name }],
+        secondaryFields: [{ key: 'title', label: 'Cargo', value: p.title || '' }].concat(p.phone ? [{ key: 'phone', label: 'Teléfono', value: p.phone }] : []),
+        auxiliaryFields: p.email ? [{ key: 'emailf', label: 'Correo', value: p.email }] : [],
+        backFields: back
+      }
+    };
+  }
+  function walletGoogleObject(p, o) {
+    o = o || {};
+    var L = links(p);
+    var issuer = o.issuerId || '3388000000000000000';
+    var suffix = (o.suffix || slug(p.name).toLowerCase()).replace(/[^\w.-]/g, '_');
+    var cls = issuer + '.' + (o.classSuffix || 'tarjeta_contacto');
+    var linksMod = [];
+    if (L.whatsapp) linksMod.push({ uri: L.whatsapp.split('?')[0], description: 'WhatsApp ' + (p.phone || ''), id: 'wa' });
+    if (p.email) linksMod.push({ uri: 'mailto:' + p.email, description: p.email, id: 'mail' });
+    if (L.website) linksMod.push({ uri: L.website, description: prettyUrl(p.website), id: 'web' });
+    if (L.linkedin) linksMod.push({ uri: L.linkedin, description: 'LinkedIn', id: 'li' });
+    if (L.instagram) linksMod.push({ uri: L.instagram, description: igHandle(p.instagram), id: 'ig' });
+    if (o.cardUrl) linksMod.push({ uri: o.cardUrl, description: 'Tarjeta digital', id: 'card' });
+    var obj = {
+      id: issuer + '.' + suffix,
+      classId: cls,
+      state: 'ACTIVE',
+      cardTitle: { defaultValue: { language: 'es', value: p.company || p.name } },
+      header: { defaultValue: { language: 'es', value: p.name } },
+      subheader: { defaultValue: { language: 'es', value: p.title || '' } },
+      hexBackgroundColor: p.theme.primary,
+      textModulesData: [].concat(p.phone ? [{ id: 'phone', header: 'Teléfono', body: p.phone }] : [], p.email ? [{ id: 'email', header: 'Correo', body: p.email }] : []),
+      linksModuleData: { uris: linksMod }
+    };
+    if (o.logoUrl) obj.logo = { sourceUri: { uri: o.logoUrl }, contentDescription: { defaultValue: { language: 'es', value: p.company || '' } } };
+    if (o.heroUrl) obj.heroImage = { sourceUri: { uri: o.heroUrl } };
+    if (o.cardUrl) obj.barcode = { type: 'QR_CODE', value: o.cardUrl, alternateText: 'Escanea mi tarjeta' };
+    return { genericClasses: [{ id: cls }], genericObjects: [obj] };
   }
 
   /* ── Enlaces de cada canal ──────────────────────────────────────────── */
@@ -744,6 +839,16 @@ var KVC = (function () {
     var pills = [];
     if (L.whatsapp) pills.push(a(L.whatsapp, 'kvc-pill kvc-pill-wa kvc-c-whatsapp', null, [icon('whatsapp'), h('span', { text: 'WhatsApp' })]));
     if (L.phone) pills.push(a(L.phone, 'kvc-pill kvc-c-phone', null, [icon('phone'), h('span', { text: _('Llamar') })]));
+    // Guardar en la billetera del teléfono (solo la tarjeta de contacto). Se
+    // muestra el botón que corresponde al teléfono; en computador, los dos.
+    function walletRow() {
+      var ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+      var ios = /iPhone|iPad|iPod/i.test(ua), android = /Android/i.test(ua);
+      var btns = [];
+      if (p.walletApple && !android) btns.push(a(p.walletApple, 'kvc-wallet kvc-wallet-apple kvc-c-wallet', null, [icon('wallet'), h('span', null, h('small', { text: _('Agregar a') }), h('strong', { text: 'Apple Wallet' }))]));
+      if (p.walletGoogle && !ios) btns.push(a(p.walletGoogle, 'kvc-wallet kvc-wallet-google kvc-c-wallet', null, [icon('wallet'), h('span', null, h('small', { text: _('Guardar en') }), h('strong', { text: 'Google Wallet' }))]));
+      return btns.length ? h('div', { class: 'kvc-wallets' }, btns) : null;
+    }
     function cornerLogo(cls) {
       return p.logo ? h('a', { class: 'kvc-corner-logo ' + cls, href: L.website || null, target: L.website ? '_blank' : null, rel: 'noopener noreferrer', title: p.company },
         h('img', { src: R(p.logo), alt: p.company })) : null;
@@ -771,7 +876,8 @@ var KVC = (function () {
         visit: stats.sent ? '0' : '1', clicks: stats.clicks.join(','), saved: String(stats.saved), shared: String(stats.shared),
         qr: String(stats.qr), lead: stats.lead, lang: lang, view: view,
         ref: (typeof document !== 'undefined' && document.referrer ? String(document.referrer).split('/')[2] || '' : '').slice(0, 80),
-        mobile: /Mobi|Android|iPhone/i.test(typeof navigator !== 'undefined' ? navigator.userAgent : '') ? '1' : '0'
+        mobile: /Mobi|Android|iPhone/i.test(typeof navigator !== 'undefined' ? navigator.userAgent : '') ? '1' : '0',
+        m: (opts.member && opts.member.key) || ''
       });
       stats.sent = true; stats.dirty = false; stats.clicks = []; stats.saved = 0; stats.shared = 0; stats.qr = 0; stats.lead = '';
       try {
@@ -833,7 +939,8 @@ var KVC = (function () {
         fetch(opts.leadEndpoint, {
           method: 'POST', headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
           body: JSON.stringify({ name: v.name, company: v.company, email: v.email, phone: v.phone, message: v.message, lang: lang,
-            source: opts.preview ? 'vista previa' : (opts.source || 'tarjeta'), page: here.slice(0, 200), _hp: hp.value })
+            source: opts.preview ? 'vista previa' : (opts.source || 'tarjeta'), page: here.slice(0, 200),
+            for: (opts.member && opts.member.key) || '', forName: (opts.member && opts.member.key) ? p.name : '', _hp: hp.value })
         }).then(function (r) {
           sendBtn.disabled = false;
           if (r.status === 429) { setMsg(_('Demasiados envíos seguidos. Espera un minuto.'), 'err'); waFallback.hidden = false; return; }
@@ -892,7 +999,8 @@ var KVC = (function () {
           p.tagline ? h('p', { class: 'kvc-tagline', text: p.tagline }) : null,
           h('button', { type: 'button', class: 'kvc-save', on: { click: onSave } },
             icon('user-plus', 'kvc-bounce'), h('span', { text: _('Guardar Contacto en el Teléfono') }), h('span', { class: 'kvc-save-chip', text: 'vCard .VCF' })),
-          pills.length ? h('div', { class: 'kvc-pills kvc-pills-' + pills.length }, pills) : null),
+          pills.length ? h('div', { class: 'kvc-pills kvc-pills-' + pills.length }, pills) : null,
+          walletRow()),
         h('div', { class: 'kvc-divider' }, h('span', { text: _('Canales Oficiales') })),
         h('div', { class: 'kvc-hlist' }, hubList),
         leadBox,
@@ -959,6 +1067,26 @@ var KVC = (function () {
         h('button', { type: 'button', class: 'kvc-btn-s', on: { click: onShare } }, icon('share-2'), h('span', { text: _('Compartir') }))));
 
     /* ── Vista 3: Código QR ── */
+    /* Tarjeta NFC (v2.0): Chrome en Android graba el destino del QR en una
+       etiqueta NFC. Acercar un teléfono a la etiqueta abre la tarjeta. */
+    function nfcBox() {
+      if (opts.preview || typeof window === 'undefined' || !('NDEFReader' in window)) return null;
+      var msg = h('small', { class: 'kvc-nfc-msg', role: 'status' });
+      var btn = h('button', { type: 'button', class: 'kvc-btn-s kvc-nfc-btn', on: { click: function () {
+        var isVcard = qrUrl.indexOf('BEGIN:VCARD') === 0;
+        var rec = isVcard
+          ? { recordType: 'mime', mediaType: 'text/vcard', data: new TextEncoder().encode(qrUrl) }
+          : { recordType: 'url', data: qrUrl };
+        msg.textContent = _('Acerca la etiqueta NFC a la parte trasera del teléfono…');
+        try {
+          new window.NDEFReader().write({ records: [rec] }).then(function () {
+            msg.textContent = _('Listo: la etiqueta abre ') + (isVcard ? _('tu contacto') : _('tu tarjeta')) + '.';
+            track('nfc');
+          }).catch(function (e) { msg.textContent = _('No se pudo grabar: ') + ((e && e.message) || e); });
+        } catch (e) { msg.textContent = _('No se pudo grabar: ') + ((e && e.message) || e); }
+      } } }, icon('nfc'), h('span', { text: _('Grabar en tarjeta NFC') }));
+      return h('div', { class: 'kvc-nfc' }, btn, msg);
+    }
     var urlInput = h('input', { class: 'kvc-input kvc-mono', value: qrUrl, 'aria-label': _('Enlace de destino del QR'), spellcheck: 'false' });
     var urlMsg = h('small', { class: 'kvc-field-err' });
     // Destinos sugeridos: todos son enlaces https reales que abren el canal
@@ -1014,6 +1142,7 @@ var KVC = (function () {
           destHint,
           urlMsg,
           h('small', { text: _('Puedes personalizar el enlace a tu propio dominio si lo requieres. Solo se aceptan direcciones https:// públicas.') })),
+        nfcBox(),
         h('div', { class: 'kvc-qr-actions' },
           h('button', { type: 'button', class: 'kvc-btn-s kvc-btn-s-primary', on: { click: onQrPng } }, icon('download'), h('span', { text: _('Descargar PNG HD') })),
           h('button', { type: 'button', class: 'kvc-btn-s', on: { click: function () { copy(qrUrl, _('Enlace copiado')); } } }, icon('copy'), h('span', { text: _('Copiar Enlace') })))));
@@ -1224,6 +1353,10 @@ var KVC = (function () {
     VERSION: VERSION,
     DEFAULT_PROFILE: DEFAULT_PROFILE,
     EMPTY_PROFILE: EMPTY_PROFILE,
+    PERSONAL_KEYS: PERSONAL_KEYS,
+    teamMerge: teamMerge,
+    walletApplePass: walletApplePass,
+    walletGoogleObject: walletGoogleObject,
     shareImage: shareImage,
     vcardLite: vcardLite,
     localize: localize,

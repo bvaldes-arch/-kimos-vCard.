@@ -14,7 +14,7 @@ empresa, la app asume su identidad desde el registro de marcas de KIMOS
 
 | Archivo | Qué es |
 |---|---|
-| [`kimos-vcard-1.3.0.kapp`](kimos-vcard-1.3.0.kapp) | La app para KIMOS: Tienda → *Instalar desde archivo* (superadmin). |
+| [`kimos-vcard-2.0.0.kapp`](kimos-vcard-2.0.0.kapp) | La app para KIMOS: Tienda → *Instalar desde archivo* (superadmin). |
 | [`docs/index.html`](docs/index.html) | La tarjeta pública autónoma (lo que se abre al escanear). Publicada con GitHub Pages. |
 | [`docs/Bryan_Valdes_FIGIT_Tarjeta_Digital.pdf`](docs/Bryan_Valdes_FIGIT_Tarjeta_Digital.pdf) | PDF interactivo: QR protagonista + botones con enlace (WhatsApp, contacto, correo, LinkedIn, web, Instagram, llamar, ubicación) y la tarjeta ejecutiva. |
 | [`docs/contacto.vcf`](docs/contacto.vcf) | Contacto con foto, enlazado desde el PDF («Guardar contacto»). |
@@ -43,6 +43,26 @@ KVC_PUBLIC_URL=https://figit.ai/bryan/ node tools/make-pdf.mjs
 Dentro de KIMOS no hace falta nada de esto: al **Publicar**, el QR apunta a
 `{tu KIMOS}/api/apps/kimos-vcard/asset/card.html?i={documento}`, que sirve el
 propio KIMOS. El botón **Probar el QR** comprueba que ese enlace abre tu tarjeta.
+
+## Novedades 2.0 «Equipo»
+
+- **Tarjetas del equipo**: pestaña Equipo → «Crear tarjetas para todos». Cada
+  persona del directorio de KIMOS recibe su tarjeta con la marca de la
+  principal, su enlace y su QR. Sus prospectos llegan marcados con su nombre.
+- **Seguimiento**: en Prospectos, «Redactar seguimiento» prepara el primer
+  mensaje (breve, cordial o formal) por WhatsApp o correo.
+- **Apple Wallet y Google Wallet**: solo guardan la tarjeta de contacto. Se
+  firman con tus credenciales:
+
+```bash
+node tools/wallet.mjs --apple-cert pass.pem --apple-key pass.key --wwdr wwdr.pem --pass-type pass.ai.figit.tarjeta --team TU_TEAM_ID
+```
+
+```bash
+node tools/wallet.mjs --google-sa cuenta-servicio.json --issuer TU_ISSUER_ID
+```
+
+- **NFC**: en Chrome para Android, Código QR → «Grabar en tarjeta NFC».
 
 ## Novedades 1.3 «Medición»
 

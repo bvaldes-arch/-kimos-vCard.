@@ -178,3 +178,20 @@
   .kimos-vcard .kvcx-editor, .kimos-vcard .kvcx-preview { overflow: visible; border-right: 0; }
   .kimos-vcard .kvcx-grid { grid-template-columns: 1fr; }
 }
+/* ── v2.0 ── */
+.kimos-vcard .kvcx-select { width: auto; max-width: 220px; padding: 6px 8px; }
+.kimos-vcard .kvcx-search { flex: 1; min-width: 180px; }
+.kimos-vcard .kvcx-chip { padding: 1px 7px; border-radius: 999px; background: var(--vx-soft); font-size: 10.5px; font-weight: 600; }
+.kimos-vcard .kvcx-fu { display: grid; gap: 8px; padding: 10px; border-radius: 10px; background: var(--vx-soft); }
+.kimos-vcard .kvcx-members { display: grid; gap: 8px; }
+.kimos-vcard .kvcx-member { display: grid; gap: 8px; padding: 10px 12px; border-radius: var(--vx-radius); background: var(--vx-glass); border: 1px solid var(--vx-border); }
+.kimos-vcard .kvcx-member-on { border-left: 3px solid var(--vx-accent); }
+.kimos-vcard .kvcx-member-h { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 10px; align-items: center; }
+.kimos-vcard .kvcx-member-ph { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; background: var(--vx-soft); }
+.kimos-vcard .kvcx-member-ini { display: grid; place-items: center; font-weight: 700; color: var(--vx-muted); }
+.kimos-vcard .kvcx-member-t { display: grid; min-width: 0; }
+.kimos-vcard .kvcx-member-t small { font-size: 11px; color: var(--vx-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kimos-vcard .kvcx-switch { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--vx-muted); cursor: pointer; white-space: nowrap; }
+.kimos-vcard .kvcx-steps { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 12px; color: var(--vx-muted); }
+.kimos-vcard .kvcx-preview-who { font-size: 12px; color: var(--vx-muted); }
+.kimos-vcard .kvcx-preview-who button { border: 0; background: none; color: var(--vx-accent); font: inherit; cursor: pointer; text-decoration: underline; }

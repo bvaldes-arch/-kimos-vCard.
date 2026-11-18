@@ -13,12 +13,12 @@
  */
 
 // Mantener en sincronía con manifest.json (y con el catálogo raíz).
-const APP_VERSION = '1.3.0';
+const APP_VERSION = '2.0.0';
 const APP_ID = 'kimos-vcard';
 
 // Estilos de la app, también inyectados desde JS con su versión: KIMOS no
 // recarga la página al actualizar una app y dejaba la hoja anterior.
-const APP_CSS = "/* KIMOS vCard — interfaz de la app dentro de KIMOS (APP-SPEC §9).\n   Todo color sale de los tokens del tema del host: la app se re-marca sola. */\n.kimos-vcard {\n  --vx-fg: hsl(var(--foreground, 220 25% 10%));\n  --vx-muted: hsl(var(--muted-foreground, 215 16% 47%));\n  --vx-glass: hsl(var(--card, 0 0% 100%) / .72);\n  --vx-input: hsl(var(--background, 0 0% 100%) / .9);\n  --vx-border: hsl(var(--border, 214 32% 85%));\n  --vx-soft: hsl(var(--muted, 210 40% 96%));\n  --vx-accent: hsl(var(--primary, 221 100% 50%));\n  --vx-accent-fg: hsl(var(--primary-foreground, 0 0% 100%));\n  --vx-paper: #FFFFFF; /* papel blanco: logos y QR se leen siempre sobre blanco */\n  --vx-ok: #059669;\n  --vx-err: #DC2626;\n  --vx-radius: var(--radius, .75rem);\n  height: 100%;\n  min-height: 0;\n  display: flex;\n  flex-direction: column;\n  background: transparent;\n  color: var(--vx-fg);\n  font-family: var(--font-sans, Inter, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif);\n  font-size: 13px;\n  overflow: hidden;\n}\n.dark .kimos-vcard { --vx-ok: #34D399; --vx-err: #F87171; }\n.kimos-vcard *, .kimos-vcard *::before, .kimos-vcard *::after { box-sizing: border-box; }\n\n.kimos-vcard .kvcx-top {\n  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px;\n  padding: 10px 14px; border-bottom: var(--border-width, 1px) solid var(--vx-border);\n  background: var(--vx-glass); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);\n}\n.kimos-vcard .kvcx-title { display: flex; align-items: center; gap: 8px; min-width: 0; }\n.kimos-vcard .kvcx-title strong { font-size: 14px; }\n.kimos-vcard .kvcx-ver { font-size: 10px; padding: 1px 6px; border-radius: 999px; background: var(--vx-soft); color: var(--vx-muted); }\n.kimos-vcard .kvcx-pill-ok { font-size: 11px; font-weight: 600; color: var(--vx-ok); }\n.kimos-vcard .kvcx-tabs { display: flex; gap: 2px; padding: 3px; border-radius: calc(var(--vx-radius) - 2px); background: var(--vx-soft); }\n.kimos-vcard .kvcx-tab { border: 0; background: none; color: var(--vx-muted); font: inherit; font-weight: 600; padding: 6px 12px; border-radius: calc(var(--vx-radius) - 4px); cursor: pointer; white-space: nowrap; }\n.kimos-vcard .kvcx-tab-on { background: hsl(var(--background, 0 0% 100%)); color: var(--vx-fg); box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, .08)); }\n.kimos-vcard .kvcx-actions { display: flex; justify-content: flex-end; }\n.kimos-vcard .kvcx-seg { display: flex; border: var(--border-width, 1px) solid var(--vx-border); border-radius: calc(var(--vx-radius) - 2px); overflow: hidden; }\n.kimos-vcard .kvcx-seg button { border: 0; background: transparent; color: var(--vx-muted); font: inherit; padding: 5px 10px; cursor: pointer; }\n.kimos-vcard .kvcx-seg button.kvcx-on { background: var(--vx-accent); color: var(--vx-accent-fg); }\n\n.kimos-vcard .kvcx-error { display: flex; justify-content: space-between; gap: 10px; margin: 8px 14px 0; padding: 8px 12px; border-radius: var(--vx-radius);\n  color: var(--vx-err); background: hsl(var(--destructive, 0 84% 60%) / .1); border: 1px solid hsl(var(--destructive, 0 84% 60%) / .3); }\n.kimos-vcard .kvcx-error button { border: 0; background: none; color: inherit; font-size: 16px; cursor: pointer; }\n\n.kimos-vcard .kvcx-body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(320px, 440px) 1fr; }\n.kimos-vcard .kvcx-editor { min-height: 0; overflow: auto; padding: 14px; border-right: var(--border-width, 1px) solid var(--vx-border); }\n.kimos-vcard .kvcx-preview { min-height: 0; overflow: auto; padding: 14px; display: flex; flex-direction: column; align-items: center; gap: 10px; }\n.kimos-vcard .kvcx-preview-k { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--vx-muted); }\n.kimos-vcard .kvcx-device { border-radius: 28px; overflow: hidden; border: 1px solid var(--vx-border); box-shadow: var(--shadow-md, 0 10px 30px -10px rgba(0, 0, 0, .3)); background: var(--vx-soft); }\n.kimos-vcard .kvcx-device-mobile { width: 390px; max-width: 100%; height: 780px; border-width: 8px; border-color: hsl(var(--foreground, 220 25% 10%) / .85); border-radius: 44px; }\n.kimos-vcard .kvcx-device-desktop { width: 100%; max-width: 1000px; height: 720px; border-radius: 14px; }\n.kimos-vcard .kvcx-device-screen { width: 100%; height: 100%; overflow: auto; }\n.kimos-vcard .kvcx-device-mobile .kvcx-device-screen { border-radius: 36px; }\n.kimos-vcard .kvcx-device-screen > .kvc { min-height: 100%; }\n\n.kimos-vcard .kvcx-pane { display: grid; gap: 14px; }\n.kimos-vcard .kvcx-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; }\n.kimos-vcard .kvcx-field { display: grid; gap: 4px; min-width: 0; }\n.kimos-vcard .kvcx-wide { grid-column: 1 / -1; }\n.kimos-vcard .kvcx-label { font-size: 11px; font-weight: 600; color: var(--vx-muted); }\n.kimos-vcard .kvcx-help { font-size: 11px; color: var(--vx-muted); }\n.kimos-vcard .kvcx-input { width: 100%; font: inherit; color: var(--vx-fg); background: var(--vx-input); border: var(--border-width, 1px) solid hsl(var(--input, 214 32% 85%)); border-radius: calc(var(--vx-radius) - 2px); padding: 7px 9px; resize: vertical; }\n.kimos-vcard .kvcx-input:focus { outline: 2px solid hsl(var(--ring, 221 100% 50%) / .5); outline-offset: 0; }\n.kimos-vcard .kvcx-sub { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--vx-muted); padding-top: 4px; border-top: 1px solid var(--vx-border); }\n\n.kimos-vcard .kvcx-row { display: flex; align-items: center; gap: 8px; }\n.kimos-vcard .kvcx-wrap { flex-wrap: wrap; }\n.kimos-vcard .kvcx-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; font: inherit; font-weight: 600; padding: 7px 12px; cursor: pointer; text-decoration: none;\n  color: var(--vx-fg); background: hsl(var(--background, 0 0% 100%)); border: var(--border-width, 1px) solid var(--vx-border); border-radius: calc(var(--vx-radius) - 2px); }\n.kimos-vcard .kvcx-btn:hover { background: var(--vx-soft); }\n.kimos-vcard .kvcx-btn:disabled { opacity: .55; cursor: default; }\n.kimos-vcard .kvcx-btn-primary { background: var(--vx-accent); color: var(--vx-accent-fg); border-color: transparent; }\n.kimos-vcard .kvcx-btn-primary:hover { background: var(--vx-accent); filter: brightness(1.08); }\n.kimos-vcard .kvcx-btn-ghost { background: transparent; }\n\n.kimos-vcard .kvcx-img { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: var(--vx-radius); background: var(--vx-glass); border: 1px solid var(--vx-border); }\n.kimos-vcard .kvcx-img-prev { width: 64px; height: 64px; flex: none; display: grid; place-items: center; border-radius: 12px; background: var(--vx-paper); border: 1px solid var(--vx-border); overflow: hidden; font-size: 10px; color: var(--vx-muted); }\n.kimos-vcard .kvcx-img-prev img { max-width: 100%; max-height: 100%; object-fit: contain; }\n.kimos-vcard .kvcx-round { border-radius: 50%; }\n.kimos-vcard .kvcx-round img { width: 100%; height: 100%; object-fit: cover; }\n.kimos-vcard .kvcx-img-meta { display: grid; gap: 6px; }\n\n.kimos-vcard .kvcx-colors { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }\n.kimos-vcard .kvcx-color { display: flex; align-items: center; gap: 6px; font-size: 12px; }\n.kimos-vcard .kvcx-color input { width: 34px; height: 28px; padding: 0; border: 1px solid var(--vx-border); border-radius: 8px; background: none; cursor: pointer; }\n\n.kimos-vcard .kvcx-brand { display: grid; gap: 10px; padding: 12px; border-radius: var(--vx-radius); background: var(--vx-glass); border: 1px solid var(--vx-border); }\n.kimos-vcard .kvcx-brand-off small, .kimos-vcard .kvcx-brand-head small { display: block; color: var(--vx-muted); font-size: 11px; }\n.kimos-vcard .kvcx-brand-head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }\n.kimos-vcard .kvcx-brand-list { display: grid; gap: 6px; }\n.kimos-vcard .kvcx-brand-opt { display: grid; grid-template-columns: 40px 1fr auto; align-items: center; gap: 10px; padding: 7px 9px; text-align: left; font: inherit; color: var(--vx-fg); cursor: pointer;\n  background: hsl(var(--background, 0 0% 100%)); border: 1px solid var(--vx-border); border-radius: calc(var(--vx-radius) - 2px); }\n.kimos-vcard .kvcx-brand-opt.kvcx-on { border-color: var(--vx-accent); box-shadow: 0 0 0 1px var(--vx-accent); }\n.kimos-vcard .kvcx-brand-opt img { width: 40px; height: 28px; object-fit: contain; background: var(--vx-paper); border-radius: 6px; }\n.kimos-vcard .kvcx-brand-ph { width: 40px; height: 28px; display: grid; place-items: center; border-radius: 6px; background: var(--vx-soft); font-weight: 700; }\n.kimos-vcard .kvcx-brand-name { font-weight: 600; display: flex; gap: 6px; align-items: center; min-width: 0; }\n.kimos-vcard .kvcx-brand-name em { font-style: normal; font-size: 10px; font-weight: 500; color: var(--vx-muted); }\n.kimos-vcard .kvcx-sws { display: flex; gap: 3px; }\n.kimos-vcard .kvcx-sw { width: 14px; height: 14px; border-radius: 4px; border: 1px solid hsl(var(--foreground, 0 0% 0%) / .15); }\n.kimos-vcard .kvcx-warns { margin: 0; padding-left: 18px; font-size: 11px; color: var(--vx-muted); }\n\n.kimos-vcard .kvcx-status { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; padding: 12px; border-radius: var(--vx-radius); background: var(--vx-glass); border: 1px solid var(--vx-border); }\n.kimos-vcard .kvcx-status small { display: block; color: var(--vx-muted); font-size: 11px; }\n.kimos-vcard .kvcx-status-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--vx-muted); }\n.kimos-vcard .kvcx-ok .kvcx-status-dot { background: var(--vx-ok); box-shadow: 0 0 0 4px color-mix(in srgb, var(--vx-ok) 20%, transparent); }\n.kimos-vcard .kvcx-warn { margin: 0; font-size: 12px; color: var(--vx-err); }\n.kimos-vcard .kvcx-qr { display: flex; gap: 14px; align-items: center; padding: 12px; border-radius: var(--vx-radius); background: var(--vx-glass); border: 1px solid var(--vx-border); }\n.kimos-vcard .kvcx-qr-img { width: 132px; flex: none; padding: 6px; background: var(--vx-paper); border-radius: 12px; }\n.kimos-vcard .kvcx-qr-img svg { width: 100%; height: auto; display: block; }\n.kimos-vcard .kvcx-qr-meta { display: grid; gap: 6px; min-width: 0; }\n.kimos-vcard .kvcx-url { font-size: 11px; word-break: break-all; padding: 6px 8px; border-radius: 8px; background: var(--vx-soft); }\n\n.kimos-vcard .kvcx-test { margin: 0; font-size: 12px; font-weight: 600; }\n.kimos-vcard .kvcx-test-ok { color: var(--vx-ok); }\n.kimos-vcard .kvcx-test-bad { color: var(--vx-err); }\n\n.kimos-vcard .kvcx-preset { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border-radius: var(--vx-radius); background: var(--vx-glass); border: 1px dashed var(--vx-border); }\n.kimos-vcard .kvcx-preset small { display: block; font-size: 11px; color: var(--vx-muted); }\n\n.kimos-vcard .kvcx-tpls { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-top: 8px; }\n.kimos-vcard .kvcx-preset { flex-direction: column; align-items: stretch; }\n.kimos-vcard .kvcx-tpl { display: grid; gap: 2px; text-align: left; padding: 9px 10px; font: inherit; color: var(--vx-fg); cursor: pointer;\n  background: hsl(var(--background, 0 0% 100%)); border: 1px solid var(--vx-border); border-radius: calc(var(--vx-radius) - 2px); }\n.kimos-vcard .kvcx-tpl:hover { border-color: var(--vx-accent); }\n.kimos-vcard .kvcx-tpl small { font-size: 11px; color: var(--vx-muted); }\n.kimos-vcard .kvcx-check { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: var(--vx-radius); background: var(--vx-glass); border: 1px solid var(--vx-border); cursor: pointer; }\n.kimos-vcard .kvcx-check input { margin-top: 3px; }\n.kimos-vcard .kvcx-check small { display: block; font-size: 11px; color: var(--vx-muted); }\n.kimos-vcard .kvcx-badge { margin-left: 6px; min-width: 18px; height: 18px; padding: 0 5px; display: inline-grid; place-items: center; border-radius: 999px; font-size: 10px; font-weight: 700; background: var(--vx-accent); color: var(--vx-accent-fg); }\n.kimos-vcard .kvcx-empty { display: grid; gap: 4px; padding: 24px 16px; text-align: center; border-radius: var(--vx-radius); border: 1px dashed var(--vx-border); }\n.kimos-vcard .kvcx-empty small { color: var(--vx-muted); font-size: 12px; }\n.kimos-vcard .kvcx-leads { display: grid; gap: 10px; }\n.kimos-vcard .kvcx-lead { display: grid; gap: 6px; padding: 12px; border-radius: var(--vx-radius); background: var(--vx-glass); border: 1px solid var(--vx-border); }\n.kimos-vcard .kvcx-lead-new { border-left: 3px solid var(--vx-accent); }\n.kimos-vcard .kvcx-lead-h { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }\n.kimos-vcard .kvcx-lead-st { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--vx-muted); }\n.kimos-vcard .kvcx-lead-new .kvcx-lead-st { color: var(--vx-accent); }\n.kimos-vcard .kvcx-lead-converted .kvcx-lead-st { color: var(--vx-ok); }\n.kimos-vcard .kvcx-lead-co { font-size: 12px; font-weight: 600; color: var(--vx-muted); }\n.kimos-vcard .kvcx-lead-meta { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 11.5px; color: var(--vx-muted); }\n.kimos-vcard .kvcx-lead-msg { margin: 0; padding: 8px 10px; border-radius: 8px; background: var(--vx-soft); font-size: 12.5px; white-space: pre-wrap; }\n\n.kimos-vcard .kvcx-boot { margin: auto; display: grid; gap: 6px; text-align: center; padding: 40px 16px; }\n.kimos-vcard .kvcx-boot small { color: var(--vx-err); max-width: 420px; }\n.kimos-vcard .kvcx-share { display: grid; gap: 10px; padding: 12px; border-radius: var(--vx-radius); background: var(--vx-glass); border: 1px solid var(--vx-border); }\n.kimos-vcard .kvcx-share small { display: block; font-size: 11px; color: var(--vx-muted); }\n.kimos-vcard .kvcx-share-img { width: 100%; border-radius: 10px; border: 1px solid var(--vx-border); }\n.kimos-vcard .kvcx-kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }\n.kimos-vcard .kvcx-kpis-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }\n.kimos-vcard .kvcx-kpi { display: grid; gap: 2px; padding: 10px 12px; border-radius: var(--vx-radius); background: var(--vx-glass); border: 1px solid var(--vx-border); min-width: 0; }\n.kimos-vcard .kvcx-kpi span { font-size: 11px; font-weight: 600; color: var(--vx-muted); }\n.kimos-vcard .kvcx-kpi strong { font-size: 24px; line-height: 1.1; font-variant-numeric: tabular-nums; }\n.kimos-vcard .kvcx-kpi small { font-size: 11px; color: var(--vx-muted); }\n.kimos-vcard .kvcx-chart { display: grid; gap: 8px; padding: 12px; border-radius: var(--vx-radius); background: var(--vx-glass); border: 1px solid var(--vx-border); }\n.kimos-vcard .kvcx-chart h4 { margin: 0; font-size: 12px; }\n.kimos-vcard .kvcx-bars { display: grid; gap: 6px; }\n.kimos-vcard .kvcx-bar-row { display: grid; grid-template-columns: 78px 1fr 34px; gap: 8px; align-items: center; font-size: 12px; }\n.kimos-vcard .kvcx-bar-t { height: 10px; border-radius: 999px; background: var(--vx-soft); overflow: hidden; }\n.kimos-vcard .kvcx-bar-f { display: block; height: 100%; border-radius: 999px; background: var(--vx-accent); min-width: 0; }\n.kimos-vcard .kvcx-bar-wa { background: var(--vx-ok); }\n.kimos-vcard .kvcx-bar-v { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }\n.kimos-vcard .kvcx-days svg { width: 100%; height: 140px; display: block; }\n.kimos-vcard .kvcx-day { fill: var(--vx-accent); }\n.kimos-vcard .kvcx-axis { stroke: var(--vx-border); stroke-width: 1; }\n.kimos-vcard .kvcx-axis-t { fill: var(--vx-muted); font-size: 10px; }\n.kimos-vcard .kvcx-refs { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 12px; }\n.kimos-vcard .kvcx-refs li { display: flex; justify-content: space-between; gap: 8px; }\n\n@media (max-width: 860px) {\n  .kimos-vcard .kvcx-top { grid-template-columns: 1fr auto; }\n  .kimos-vcard .kvcx-tabs { grid-column: 1 / -1; grid-row: 2; overflow-x: auto; }\n  .kimos-vcard .kvcx-body { grid-template-columns: 1fr; overflow: auto; }\n  .kimos-vcard .kvcx-editor, .kimos-vcard .kvcx-preview { overflow: visible; border-right: 0; }\n  .kimos-vcard .kvcx-grid { grid-template-columns: 1fr; }\n}\n";
+const APP_CSS = "/* KIMOS vCard — interfaz de la app dentro de KIMOS (APP-SPEC §9).\n   Todo color sale de los tokens del tema del host: la app se re-marca sola. */\n.kimos-vcard {\n  --vx-fg: hsl(var(--foreground, 220 25% 10%));\n  --vx-muted: hsl(var(--muted-foreground, 215 16% 47%));\n  --vx-glass: hsl(var(--card, 0 0% 100%) / .72);\n  --vx-input: hsl(var(--background, 0 0% 100%) / .9);\n  --vx-border: hsl(var(--border, 214 32% 85%));\n  --vx-soft: hsl(var(--muted, 210 40% 96%));\n  --vx-accent: hsl(var(--primary, 221 100% 50%));\n  --vx-accent-fg: hsl(var(--primary-foreground, 0 0% 100%));\n  --vx-paper: #FFFFFF; /* papel blanco: logos y QR se leen siempre sobre blanco */\n  --vx-ok: #059669;\n  --vx-err: #DC2626;\n  --vx-radius: var(--radius, .75rem);\n  height: 100%;\n  min-height: 0;\n  display: flex;\n  flex-direction: column;\n  background: transparent;\n  color: var(--vx-fg);\n  font-family: var(--font-sans, Inter, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif);\n  font-size: 13px;\n  overflow: hidden;\n}\n.dark .kimos-vcard { --vx-ok: #34D399; --vx-err: #F87171; }\n.kimos-vcard *, .kimos-vcard *::before, .kimos-vcard *::after { box-sizing: border-box; }\n\n.kimos-vcard .kvcx-top {\n  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px;\n  padding: 10px 14px; border-bottom: var(--border-width, 1px) solid var(--vx-border);\n  background: var(--vx-glass); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);\n}\n.kimos-vcard .kvcx-title { display: flex; align-items: center; gap: 8px; min-width: 0; }\n.kimos-vcard .kvcx-title strong { font-size: 14px; }\n.kimos-vcard .kvcx-ver { font-size: 10px; padding: 1px 6px; border-radius: 999px; background: var(--vx-soft); color: var(--vx-muted); }\n.kimos-vcard .kvcx-pill-ok { font-size: 11px; font-weight: 600; color: var(--vx-ok); }\n.kimos-vcard .kvcx-tabs { display: flex; gap: 2px; padding: 3px; border-radius: calc(var(--vx-radius) - 2px); background: var(--vx-soft); }\n.kimos-vcard .kvcx-tab { border: 0; background: none; color: var(--vx-muted); font: inherit; font-weight: 600; padding: 6px 12px; border-radius: calc(var(--vx-radius) - 4px); cursor: pointer; white-space: nowrap; }\n.kimos-vcard .kvcx-tab-on { background: hsl(var(--background, 0 0% 100%)); color: var(--vx-fg); box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, .08)); }\n.kimos-vcard .kvcx-actions { display: flex; justify-content: flex-end; }\n.kimos-vcard .kvcx-seg { display: flex; border: var(--border-width, 1px) solid var(--vx-border); border-radius: calc(var(--vx-radius) - 2px); overflow: hidden; }\n.kimos-vcard .kvcx-seg button { border: 0; background: transparent; color: var(--vx-muted); font: inherit; padding: 5px 10px; cursor: pointer; }\n.kimos-vcard .kvcx-seg button.kvcx-on { background: var(--vx-accent); color: var(--vx-accent-fg); }\n\n.kimos-vcard .kvcx-error { display: flex; justify-content: space-between; gap: 10px; margin: 8px 14px 0; padding: 8px 12px; border-radius: var(--vx-radius);\n  color: var(--vx-err); background: hsl(var(--destructive, 0 84% 60%) / .1); border: 1px solid hsl(var(--destructive, 0 84% 60%) / .3); }\n.kimos-vcard .kvcx-error button { border: 0; background: none; color: inherit; font-size: 16px; cursor: pointer; }\n\n.kimos-vcard .kvcx-body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(320px, 440px) 1fr; }\n.kimos-vcard .kvcx-editor { min-height: 0; overflow: auto; padding: 14px; border-right: var(--border-width, 1px) solid var(--vx-border); }\n.kimos-vcard .kvcx-preview { min-height: 0; overflow: auto; padding: 14px; display: flex; flex-direction: column; align-items: center; gap: 10px; }\n.kimos-vcard .kvcx-preview-k { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--vx-muted); }\n.kimos-vcard .kvcx-device { border-radius: 28px; overflow: hidden; border: 1px solid var(--vx-border); box-shadow: var(--shadow-md, 0 10px 30px -10px rgba(0, 0, 0, .3)); background: var(--vx-soft); }\n.kimos-vcard .kvcx-device-mobile { width: 390px; max-width: 100%; height: 780px; border-width: 8px; border-color: hsl(var(--foreground, 220 25% 10%) / .85); border-radius: 44px; }\n.kimos-vcard .kvcx-device-desktop { width: 100%; max-width: 1000px; height: 720px; border-radius: 14px; }\n.kimos-vcard .kvcx-device-screen { width: 100%; height: 100%; overflow: auto; }\n.kimos-vcard .kvcx-device-mobile .kvcx-device-screen { border-radius: 36px; }\n.kimos-vcard .kvcx-device-screen > .kvc { min-height: 100%; }\n\n.kimos-vcard .kvcx-pane { display: grid; gap: 14px; }\n.kimos-vcard .kvcx-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; }\n.kimos-vcard .kvcx-field { display: grid; gap: 4px; min-width: 0; }\n.kimos-vcard .kvcx-wide { grid-column: 1 / -1; }\n.kimos-vcard .kvcx-label { font-size: 11px; font-weight: 600; color: var(--vx-muted); }\n.kimos-vcard .kvcx-help { font-size: 11px; color: var(--vx-muted); }\n.kimos-vcard .kvcx-input { width: 100%; font: inherit; color: var(--vx-fg); background: var(--vx-input); border: var(--border-width, 1px) solid hsl(var(--input, 214 32% 85%)); border-radius: calc(var(--vx-radius) - 2px); padding: 7px 9px; resize: vertical; }\n.kimos-vcard .kvcx-input:focus { outline: 2px solid hsl(var(--ring, 221 100% 50%) / .5); outline-offset: 0; }\n.kimos-vcard .kvcx-sub { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--vx-muted); padding-top: 4px; border-top: 1px solid var(--vx-border); }\n\n.kimos-vcard .kvcx-row { display: flex; align-items: center; gap: 8px; }\n.kimos-vcard .kvcx-wrap { flex-wrap: wrap; }\n.kimos-vcard .kvcx-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; font: inherit; font-weight: 600; padding: 7px 12px; cursor: pointer; text-decoration: none;\n  color: var(--vx-fg); background: hsl(var(--background, 0 0% 100%)); border: var(--border-width, 1px) solid var(--vx-border); border-radius: calc(var(--vx-radius) - 2px); }\n.kimos-vcard .kvcx-btn:hover { background: var(--vx-soft); }\n.kimos-vcard .kvcx-btn:disabled { opacity: .55; cursor: default; }\n.kimos-vcard .kvcx-btn-primary { background: var(--vx-accent); color: var(--vx-accent-fg); border-color: transparent; }\n.kimos-vcard .kvcx-btn-primary:hover { background: var(--vx-accent); filter: brightness(1.08); }\n.kimos-vcard .kvcx-btn-ghost { background: transparent; }\n\n.kimos-vcard .kvcx-img { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: var(--vx-radius); background: var(--vx-glass); border: 1px solid var(--vx-border); }\n.kimos-vcard .kvcx-img-prev { width: 64px; height: 64px; flex: none; display: grid; place-items: center; border-radius: 12px; background: var(--vx-paper); border: 1px solid var(--vx-border); overflow: hidden; font-size: 10px; color: var(--vx-muted); }\n.kimos-vcard .kvcx-img-prev img { max-width: 100%; max-height: 100%; object-fit: contain; }\n.kimos-vcard .kvcx-round { border-radius: 50%; }\n.kimos-vcard .kvcx-round img { width: 100%; height: 100%; object-fit: cover; }\n.kimos-vcard .kvcx-img-meta { display: grid; gap: 6px; }\n\n.kimos-vcard .kvcx-colors { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }\n.kimos-vcard .kvcx-color { display: flex; align-items: center; gap: 6px; font-size: 12px; }\n.kimos-vcard .kvcx-color input { width: 34px; height: 28px; padding: 0; border: 1px solid var(--vx-border); border-radius: 8px; background: none; cursor: pointer; }\n\n.kimos-vcard .kvcx-brand { display: grid; gap: 10px; padding: 12px; border-radius: var(--vx-radius); background: var(--vx-glass); border: 1px solid var(--vx-border); }\n.kimos-vcard .kvcx-brand-off small, .kimos-vcard .kvcx-brand-head small { display: block; color: var(--vx-muted); font-size: 11px; }\n.kimos-vcard .kvcx-brand-head { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }\n.kimos-vcard .kvcx-brand-list { display: grid; gap: 6px; }\n.kimos-vcard .kvcx-brand-opt { display: grid; grid-template-columns: 40px 1fr auto; align-items: center; gap: 10px; padding: 7px 9px; text-align: left; font: inherit; color: var(--vx-fg); cursor: pointer;\n  background: hsl(var(--background, 0 0% 100%)); border: 1px solid var(--vx-border); border-radius: calc(var(--vx-radius) - 2px); }\n.kimos-vcard .kvcx-brand-opt.kvcx-on { border-color: var(--vx-accent); box-shadow: 0 0 0 1px var(--vx-accent); }\n.kimos-vcard .kvcx-brand-opt img { width: 40px; height: 28px; object-fit: contain; background: var(--vx-paper); border-radius: 6px; }\n.kimos-vcard .kvcx-brand-ph { width: 40px; height: 28px; display: grid; place-items: center; border-radius: 6px; background: var(--vx-soft); font-weight: 700; }\n.kimos-vcard .kvcx-brand-name { font-weight: 600; display: flex; gap: 6px; align-items: center; min-width: 0; }\n.kimos-vcard .kvcx-brand-name em { font-style: normal; font-size: 10px; font-weight: 500; color: var(--vx-muted); }\n.kimos-vcard .kvcx-sws { display: flex; gap: 3px; }\n.kimos-vcard .kvcx-sw { width: 14px; height: 14px; border-radius: 4px; border: 1px solid hsl(var(--foreground, 0 0% 0%) / .15); }\n.kimos-vcard .kvcx-warns { margin: 0; padding-left: 18px; font-size: 11px; color: var(--vx-muted); }\n\n.kimos-vcard .kvcx-status { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; padding: 12px; border-radius: var(--vx-radius); background: var(--vx-glass); border: 1px solid var(--vx-border); }\n.kimos-vcard .kvcx-status small { display: block; color: var(--vx-muted); font-size: 11px; }\n.kimos-vcard .kvcx-status-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--vx-muted); }\n.kimos-vcard .kvcx-ok .kvcx-status-dot { background: var(--vx-ok); box-shadow: 0 0 0 4px color-mix(in srgb, var(--vx-ok) 20%, transparent); }\n.kimos-vcard .kvcx-warn { margin: 0; font-size: 12px; color: var(--vx-err); }\n.kimos-vcard .kvcx-qr { display: flex; gap: 14px; align-items: center; padding: 12px; border-radius: var(--vx-radius); background: var(--vx-glass); border: 1px solid var(--vx-border); }\n.kimos-vcard .kvcx-qr-img { width: 132px; flex: none; padding: 6px; background: var(--vx-paper); border-radius: 12px; }\n.kimos-vcard .kvcx-qr-img svg { width: 100%; height: auto; display: block; }\n.kimos-vcard .kvcx-qr-meta { display: grid; gap: 6px; min-width: 0; }\n.kimos-vcard .kvcx-url { font-size: 11px; word-break: break-all; padding: 6px 8px; border-radius: 8px; background: var(--vx-soft); }\n\n.kimos-vcard .kvcx-test { margin: 0; font-size: 12px; font-weight: 600; }\n.kimos-vcard .kvcx-test-ok { color: var(--vx-ok); }\n.kimos-vcard .kvcx-test-bad { color: var(--vx-err); }\n\n.kimos-vcard .kvcx-preset { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border-radius: var(--vx-radius); background: var(--vx-glass); border: 1px dashed var(--vx-border); }\n.kimos-vcard .kvcx-preset small { display: block; font-size: 11px; color: var(--vx-muted); }\n\n.kimos-vcard .kvcx-tpls { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-top: 8px; }\n.kimos-vcard .kvcx-preset { flex-direction: column; align-items: stretch; }\n.kimos-vcard .kvcx-tpl { display: grid; gap: 2px; text-align: left; padding: 9px 10px; font: inherit; color: var(--vx-fg); cursor: pointer;\n  background: hsl(var(--background, 0 0% 100%)); border: 1px solid var(--vx-border); border-radius: calc(var(--vx-radius) - 2px); }\n.kimos-vcard .kvcx-tpl:hover { border-color: var(--vx-accent); }\n.kimos-vcard .kvcx-tpl small { font-size: 11px; color: var(--vx-muted); }\n.kimos-vcard .kvcx-check { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: var(--vx-radius); background: var(--vx-glass); border: 1px solid var(--vx-border); cursor: pointer; }\n.kimos-vcard .kvcx-check input { margin-top: 3px; }\n.kimos-vcard .kvcx-check small { display: block; font-size: 11px; color: var(--vx-muted); }\n.kimos-vcard .kvcx-badge { margin-left: 6px; min-width: 18px; height: 18px; padding: 0 5px; display: inline-grid; place-items: center; border-radius: 999px; font-size: 10px; font-weight: 700; background: var(--vx-accent); color: var(--vx-accent-fg); }\n.kimos-vcard .kvcx-empty { display: grid; gap: 4px; padding: 24px 16px; text-align: center; border-radius: var(--vx-radius); border: 1px dashed var(--vx-border); }\n.kimos-vcard .kvcx-empty small { color: var(--vx-muted); font-size: 12px; }\n.kimos-vcard .kvcx-leads { display: grid; gap: 10px; }\n.kimos-vcard .kvcx-lead { display: grid; gap: 6px; padding: 12px; border-radius: var(--vx-radius); background: var(--vx-glass); border: 1px solid var(--vx-border); }\n.kimos-vcard .kvcx-lead-new { border-left: 3px solid var(--vx-accent); }\n.kimos-vcard .kvcx-lead-h { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }\n.kimos-vcard .kvcx-lead-st { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--vx-muted); }\n.kimos-vcard .kvcx-lead-new .kvcx-lead-st { color: var(--vx-accent); }\n.kimos-vcard .kvcx-lead-converted .kvcx-lead-st { color: var(--vx-ok); }\n.kimos-vcard .kvcx-lead-co { font-size: 12px; font-weight: 600; color: var(--vx-muted); }\n.kimos-vcard .kvcx-lead-meta { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 11.5px; color: var(--vx-muted); }\n.kimos-vcard .kvcx-lead-msg { margin: 0; padding: 8px 10px; border-radius: 8px; background: var(--vx-soft); font-size: 12.5px; white-space: pre-wrap; }\n\n.kimos-vcard .kvcx-boot { margin: auto; display: grid; gap: 6px; text-align: center; padding: 40px 16px; }\n.kimos-vcard .kvcx-boot small { color: var(--vx-err); max-width: 420px; }\n.kimos-vcard .kvcx-share { display: grid; gap: 10px; padding: 12px; border-radius: var(--vx-radius); background: var(--vx-glass); border: 1px solid var(--vx-border); }\n.kimos-vcard .kvcx-share small { display: block; font-size: 11px; color: var(--vx-muted); }\n.kimos-vcard .kvcx-share-img { width: 100%; border-radius: 10px; border: 1px solid var(--vx-border); }\n.kimos-vcard .kvcx-kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }\n.kimos-vcard .kvcx-kpis-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }\n.kimos-vcard .kvcx-kpi { display: grid; gap: 2px; padding: 10px 12px; border-radius: var(--vx-radius); background: var(--vx-glass); border: 1px solid var(--vx-border); min-width: 0; }\n.kimos-vcard .kvcx-kpi span { font-size: 11px; font-weight: 600; color: var(--vx-muted); }\n.kimos-vcard .kvcx-kpi strong { font-size: 24px; line-height: 1.1; font-variant-numeric: tabular-nums; }\n.kimos-vcard .kvcx-kpi small { font-size: 11px; color: var(--vx-muted); }\n.kimos-vcard .kvcx-chart { display: grid; gap: 8px; padding: 12px; border-radius: var(--vx-radius); background: var(--vx-glass); border: 1px solid var(--vx-border); }\n.kimos-vcard .kvcx-chart h4 { margin: 0; font-size: 12px; }\n.kimos-vcard .kvcx-bars { display: grid; gap: 6px; }\n.kimos-vcard .kvcx-bar-row { display: grid; grid-template-columns: 78px 1fr 34px; gap: 8px; align-items: center; font-size: 12px; }\n.kimos-vcard .kvcx-bar-t { height: 10px; border-radius: 999px; background: var(--vx-soft); overflow: hidden; }\n.kimos-vcard .kvcx-bar-f { display: block; height: 100%; border-radius: 999px; background: var(--vx-accent); min-width: 0; }\n.kimos-vcard .kvcx-bar-wa { background: var(--vx-ok); }\n.kimos-vcard .kvcx-bar-v { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }\n.kimos-vcard .kvcx-days svg { width: 100%; height: 140px; display: block; }\n.kimos-vcard .kvcx-day { fill: var(--vx-accent); }\n.kimos-vcard .kvcx-axis { stroke: var(--vx-border); stroke-width: 1; }\n.kimos-vcard .kvcx-axis-t { fill: var(--vx-muted); font-size: 10px; }\n.kimos-vcard .kvcx-refs { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 12px; }\n.kimos-vcard .kvcx-refs li { display: flex; justify-content: space-between; gap: 8px; }\n\n@media (max-width: 860px) {\n  .kimos-vcard .kvcx-top { grid-template-columns: 1fr auto; }\n  .kimos-vcard .kvcx-tabs { grid-column: 1 / -1; grid-row: 2; overflow-x: auto; }\n  .kimos-vcard .kvcx-body { grid-template-columns: 1fr; overflow: auto; }\n  .kimos-vcard .kvcx-editor, .kimos-vcard .kvcx-preview { overflow: visible; border-right: 0; }\n  .kimos-vcard .kvcx-grid { grid-template-columns: 1fr; }\n}\n/* ── v2.0 ── */\n.kimos-vcard .kvcx-select { width: auto; max-width: 220px; padding: 6px 8px; }\n.kimos-vcard .kvcx-search { flex: 1; min-width: 180px; }\n.kimos-vcard .kvcx-chip { padding: 1px 7px; border-radius: 999px; background: var(--vx-soft); font-size: 10.5px; font-weight: 600; }\n.kimos-vcard .kvcx-fu { display: grid; gap: 8px; padding: 10px; border-radius: 10px; background: var(--vx-soft); }\n.kimos-vcard .kvcx-members { display: grid; gap: 8px; }\n.kimos-vcard .kvcx-member { display: grid; gap: 8px; padding: 10px 12px; border-radius: var(--vx-radius); background: var(--vx-glass); border: 1px solid var(--vx-border); }\n.kimos-vcard .kvcx-member-on { border-left: 3px solid var(--vx-accent); }\n.kimos-vcard .kvcx-member-h { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 10px; align-items: center; }\n.kimos-vcard .kvcx-member-ph { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; background: var(--vx-soft); }\n.kimos-vcard .kvcx-member-ini { display: grid; place-items: center; font-weight: 700; color: var(--vx-muted); }\n.kimos-vcard .kvcx-member-t { display: grid; min-width: 0; }\n.kimos-vcard .kvcx-member-t small { font-size: 11px; color: var(--vx-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }\n.kimos-vcard .kvcx-switch { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--vx-muted); cursor: pointer; white-space: nowrap; }\n.kimos-vcard .kvcx-steps { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 12px; color: var(--vx-muted); }\n.kimos-vcard .kvcx-preview-who { font-size: 12px; color: var(--vx-muted); }\n.kimos-vcard .kvcx-preview-who button { border: 0; background: none; color: var(--vx-accent); font: inherit; cursor: pointer; text-decoration: underline; }\n";
 
 /* ── Un solo núcleo (v1.3) ──
    El núcleo de la tarjeta (interfaz, QR, vCard) vive en assets/kvc-core.js y
@@ -52,6 +52,7 @@ const TABS = [
   { id: 'publicar', label: 'Publicar' },
   { id: 'prospectos', label: 'Prospectos' },
   { id: 'medicion', label: 'Medición' },
+  { id: 'equipo', label: 'Equipo' },
 ];
 
 /* ── Marca de la empresa (shell.brands) → tarjeta ──────────────────────
@@ -166,8 +167,12 @@ const CHANNELS = [
   ['whatsapp', 'WhatsApp'], ['email', 'Correo'], ['linkedin', 'LinkedIn'], ['website', 'Sitio web'],
   ['instagram', 'Instagram'], ['phone', 'Llamar'], ['maps', 'Ubicación'],
 ];
-function summarize(visits, leads, days, now) {
+function summarize(visits, leads, days, now, member) {
   const end = now ? new Date(now) : new Date();
+  if (member !== undefined && member !== null && member !== '*') {
+    visits = (visits || []).filter((v) => String((v.d || {}).m || '') === member);
+    leads = (leads || []).filter((l) => String((l.data || {}).for || '') === member);
+  }
   const from = days ? new Date(end.getTime() - days * 86400000) : null;
   const inRange = (iso) => { const t = Date.parse(iso || ''); return !isNaN(t) && (!from || t >= from.getTime()); };
   const vs = (visits || []).filter((v) => inRange(v.at));
@@ -219,11 +224,12 @@ export default function mount(shell) {
   let coreErr = '';
 
   /* ── Estado (un modelo en el closure; UI y agente mutan lo mismo) ── */
-  let model = { profile: null, published: false, publishedAt: '', loaded: false };
+  let model = { profile: null, team: [], published: false, publishedAt: '', loaded: false };
   let ui = { tab: 'perfil', device: 'mobile', busy: '', error: '' };
   const listeners = new Set();
   let leads = { list: [], visits: [], loaded: false, error: '' };
-  const emit = () => listeners.forEach((l) => l({ model, ui, leads }));
+  let directory = { list: [], loaded: false, loading: false, error: '' };
+  const emit = () => listeners.forEach((l) => l({ model, ui, leads, directory }));
   let saveT = null;
   let pubT = null;
   let disposed = false;
@@ -245,10 +251,55 @@ export default function mount(shell) {
     commit({ profile: KVC.normalize(p) });
   }
 
+  /* ── Equipo (v2.0) ── cada persona: { key, on, profile (solo lo personal) } */
+  function cleanTeam(t) {
+    return (Array.isArray(t) ? t : []).filter((x) => x && /^[\w-]{1,64}$/.test(String(x.key || ''))).map((x) => {
+      const prof = {};
+      KVC.PERSONAL_KEYS.forEach((k) => { if (x.profile && typeof x.profile[k] === 'string') prof[k] = x.profile[k].slice(0, k === 'photo' ? 800000 : 400); });
+      return { key: String(x.key), on: x.on !== false, profile: prof };
+    }).slice(0, 300);
+  }
+  function memberUrl(key) { return kimosUrl() ? kimosUrl() + '&m=' + encodeURIComponent(key) : ''; }
+  function memberProfile(mem) { return KVC.teamMerge(model.profile, mem.profile); }
+  function setTeam(next) { commit({ team: cleanTeam(next) }); }
+  function upsertMember(key, patch, on) {
+    const t = model.team.slice();
+    const i = t.findIndex((x) => x.key === key);
+    if (i < 0) t.push({ key, on: on !== false, profile: patch });
+    else t[i] = { key, on: on === undefined ? t[i].on : on, profile: Object.assign({}, t[i].profile, patch) };
+    setTeam(t);
+  }
+  function keyFor(actor) { return String(actor.id || actor.email || '').toLowerCase().replace(/[^\w-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'p' + Date.now(); }
+  function personalFromActor(a) {
+    const name = String(a.displayName || a.name || a.email || '').trim();
+    const phone = String(a.phone || '');
+    return {
+      name, firstName: name.split(' ')[0] || '', lastName: name.split(' ').slice(1).join(' '),
+      title: String(a.description || ''), email: String(a.email || '').toLowerCase(), phone, whatsapp: phone.replace(/\D/g, ''),
+      photo: String(a.photoUrl || ''),
+    };
+  }
+  async function loadDirectory() {
+    if (directory.loading) return;
+    directory = Object.assign({}, directory, { loading: true, error: '' }); emit();
+    try {
+      if (typeof shell.authFetch !== 'function') throw new Error('Este KIMOS no permite leer el directorio desde apps.');
+      const r = await shell.authFetch('/api/identity/actors', { cache: 'no-store' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const j = await r.json();
+      const list = (j.actors || []).filter((a) => a && (a.type || 'human') === 'human' && a.active !== false)
+        .sort((x, y) => String(x.displayName || x.email).localeCompare(String(y.displayName || y.email), 'es'));
+      directory = { list, loaded: true, loading: false, error: '' };
+    } catch (e) {
+      directory = { list: [], loaded: true, loading: false, error: 'No se pudo leer el directorio: ' + String((e && e.message) || e) };
+    }
+    emit();
+  }
+
   async function save() {
     if (!instanceId || disposed) return;
     try {
-      await shell.saveData({ v: 1, profile: model.profile, published: model.published, publishedAt: model.publishedAt });
+      await shell.saveData({ v: 1, profile: model.profile, team: model.team, published: model.published, publishedAt: model.publishedAt });
     } catch (e) {
       setUi({ error: 'No se pudo guardar: ' + String((e && e.message) || e) });
     }
@@ -361,7 +412,7 @@ export default function mount(shell) {
       if (d && d.profile) {
         fresh = false;
         model = Object.assign({}, model, {
-          profile: KVC.normalize(d.profile), published: d.published === true, publishedAt: d.publishedAt || '',
+          profile: KVC.normalize(d.profile), team: cleanTeam(d.team), published: d.published === true, publishedAt: d.publishedAt || '',
         });
       }
     } catch (e) { /* instancia nueva */ }
@@ -438,7 +489,12 @@ export default function mount(shell) {
         channels: [].concat(model.profile.leadForm === 'on' ? ['lead'] : [], model.profile.stats === 'on' ? ['visita'] : []),
         // Lo que ve el mundo: SOLO la tarjeta. Es información de contacto
         // pensada para compartirse; nada más de la instancia sale de aquí.
-        data: enabled ? { profile: model.profile, leads: model.profile.leadForm === 'on', stats: model.profile.stats === 'on', app: APP_ID, version: APP_VERSION } : {},
+        data: enabled ? {
+          profile: model.profile, leads: model.profile.leadForm === 'on', stats: model.profile.stats === 'on',
+          // Equipo: solo lo personal de cada uno; la marca la pone la tarjeta principal.
+          team: model.team.filter((x) => x.on).map((x) => ({ key: x.key, profile: x.profile })),
+          app: APP_ID, version: APP_VERSION,
+        } : {},
       },
     };
     try {
@@ -503,6 +559,56 @@ export default function mount(shell) {
       shell.notify({ level: 'error', text: 'No se pudo pasar a Clientes: ' + String((e && e.message) || e) });
     }
   }
+  /* ── Seguimiento (v2.0) ──
+     Redacta el primer mensaje al prospecto. Con shell.agents (KIMOS ≥ 0.96 y
+     permiso agent.ask) lo escribe el agente elegido; si no existe, falla o
+     se agota la cuota, lo escribe la app con los datos del prospecto. */
+  function followUpDraft(lead, tone, channel) {
+    const d = lead.data || {};
+    const owner = d.for ? (model.team.find((x) => x.key === d.for) || {}).profile || {} : model.profile;
+    const me = (owner.name || model.profile.name || '').trim();
+    const co = model.profile.company || '';
+    const first = String(d.name || '').trim().split(' ')[0] || '';
+    const en = d.lang === 'en';
+    const topic = String(d.message || '').trim().replace(/[.!?\s]+$/, '');
+    const L = KVC.links(model.profile);
+    if (en) {
+      const open = tone === 'formal' ? 'Dear ' + (d.name || first) + ',' : 'Hi ' + first + '!';
+      const body = topic ? 'Thanks for reaching out about “' + topic + '”.' : 'Thanks for leaving your details on my digital card.';
+      const ask = tone === 'breve' ? 'Do you have 15 minutes this week for a quick call?' : 'I would love to understand what you need' + (d.company ? ' at ' + d.company : '') + ' and show you how ' + co + ' can help. Would a 20-minute call this week work for you?';
+      const sign = channel === 'email' ? '\n\nBest regards,\n' + me + '\n' + (owner.title || model.profile.titleEn || '') + ' · ' + co + (L.website ? '\n' + L.website : '') : '\n— ' + me + ', ' + co;
+      return open + (channel === 'email' ? '\n\n' : ' ') + body + ' ' + ask + sign;
+    }
+    const open = tone === 'formal' ? 'Estimado/a ' + (d.name || first) + ':' : '¡Hola ' + first + '!';
+    const body = topic ? 'Gracias por escribirme sobre «' + topic + '».' : 'Gracias por dejarme tus datos en mi tarjeta digital.';
+    const ask = tone === 'breve'
+      ? '¿Tienes 15 minutos esta semana para una llamada corta?'
+      : 'Me gustaría entender qué necesitas' + (d.company ? ' en ' + d.company : '') + ' y mostrarte cómo ' + co + ' puede ayudarte. ¿Te acomoda una llamada de 20 minutos esta semana?';
+    const sign = channel === 'email'
+      ? '\n\nSaludos cordiales,\n' + me + '\n' + (owner.title || model.profile.title || '') + ' · ' + co + (L.website ? '\n' + L.website : '')
+      : '\n— ' + me + ', ' + co;
+    return open + (channel === 'email' ? '\n\n' : ' ') + body + ' ' + ask + sign;
+  }
+  let agentsList = null;
+  async function loadAgents() {
+    if (agentsList || !shell.agents || typeof shell.authFetch !== 'function') return agentsList || [];
+    try {
+      const r = await shell.authFetch('/api/identity/actors', { cache: 'no-store' });
+      const j = r.ok ? await r.json() : { actors: [] };
+      agentsList = (j.actors || []).filter((a) => a && a.type === 'agent' && a.active !== false);
+    } catch (e) { agentsList = []; }
+    return agentsList;
+  }
+  async function agentDraft(agentId, lead, tone, channel) {
+    const d = lead.data || {};
+    const r = await shell.agents.ask({
+      agentId,
+      question: 'Redacta el primer mensaje de seguimiento por ' + (channel === 'email' ? 'correo' : 'WhatsApp') + ', tono ' + tone + ', en ' + (d.lang === 'en' ? 'inglés' : 'español') + ', para este prospecto. Devuelve solo el mensaje.',
+      context: { prospecto: { nombre: d.name, empresa: d.company, mensaje: d.message, idioma: d.lang }, remitente: { nombre: model.profile.name, cargo: model.profile.title, empresa: model.profile.company, web: model.profile.website } },
+    });
+    return String((r && r.answer) || '').trim();
+  }
+
   const leadsTimer = setInterval(() => {
     if (typeof document === 'undefined' || document.visibilityState !== 'hidden') void loadLeads();
   }, 15000);
@@ -561,6 +667,9 @@ export default function mount(shell) {
       tools: [
         { name: 'GET_CARD', description: 'Devuelve los datos de la tarjeta, si está publicada y el enlace del QR.', inputSchema: { type: 'object', properties: {} } },
         { name: 'UPDATE_CARD', description: 'Actualiza campos de la tarjeta. Solo se cambian los campos enviados. whatsapp va en dígitos con código de país (56987161097).', inputSchema: { type: 'object', properties: props } },
+        { name: 'LIST_TEAM', description: 'Lista las tarjetas del equipo publicadas en esta instancia (clave, nombre, cargo, enlace).', inputSchema: { type: 'object', properties: {} } },
+        { name: 'SET_TEAM_MEMBER', description: 'Crea o actualiza la tarjeta de una persona del equipo. key: identificador corto. Campos personales: name, title, titleEn, email, phone, whatsapp, linkedin. on=false la despublica.', inputSchema: { type: 'object', properties: { key: { type: 'string' }, on: { type: 'boolean' }, name: { type: 'string' }, title: { type: 'string' }, titleEn: { type: 'string' }, email: { type: 'string' }, phone: { type: 'string' }, whatsapp: { type: 'string' }, linkedin: { type: 'string' } }, required: ['key'] } },
+        { name: 'DRAFT_FOLLOW_UP', description: 'Redacta el mensaje de seguimiento para un prospecto (id de LIST_LEADS). tone: breve | cordial | formal. channel: whatsapp | email.', inputSchema: { type: 'object', properties: { leadId: { type: 'string' }, tone: { type: 'string' }, channel: { type: 'string' } }, required: ['leadId'] } },
         { name: 'GET_STATS', description: 'Medición de la tarjeta: aperturas, toques por canal (WhatsApp, correo, LinkedIn, web, Instagram, llamar, ubicación), contactos guardados y prospectos. days: 7, 30, 90 o 0 (todo).', inputSchema: { type: 'object', properties: { days: { type: 'number' } } } },
         { name: 'LIST_LEADS', description: 'Lista los prospectos que dejaron sus datos en la tarjeta (nombre, empresa, correo, teléfono, mensaje, estado).', inputSchema: { type: 'object', properties: {} } },
         { name: 'SET_PUBLISHED', description: 'Publica (true) o despublica (false) la página pública que abre el QR.', inputSchema: { type: 'object', properties: { published: { type: 'boolean' } }, required: ['published'] } },
@@ -581,6 +690,25 @@ export default function mount(shell) {
           if (!Object.keys(patch).length) return { success: false, error: 'No llegó ningún campo editable.' };
           updateProfile(patch);
           return { success: true, message: 'Tarjeta actualizada: ' + Object.keys(patch).join(', ') };
+        }
+        if (t === 'LIST_TEAM') {
+          return { success: true, message: JSON.stringify(model.team.map((x) => ({ key: x.key, on: x.on, name: x.profile.name, title: x.profile.title, url: memberUrl(x.key) }))) };
+        }
+        if (t === 'SET_TEAM_MEMBER') {
+          const key = String(pl.key || '').toLowerCase().replace(/[^\w-]+/g, '-').slice(0, 60);
+          if (!key) return { success: false, error: 'Falta key.' };
+          const patch = {};
+          ['name', 'title', 'titleEn', 'email', 'phone', 'whatsapp', 'linkedin'].forEach((k) => { if (typeof pl[k] === 'string') patch[k] = pl[k].slice(0, 400); });
+          if (patch.name && !patch.firstName) { patch.firstName = patch.name.split(' ')[0]; patch.lastName = patch.name.split(' ').slice(1).join(' '); }
+          upsertMember(key, patch, typeof pl.on === 'boolean' ? pl.on : undefined);
+          return { success: true, message: 'Tarjeta de ' + (patch.name || key) + ' lista: ' + memberUrl(key) };
+        }
+        if (t === 'DRAFT_FOLLOW_UP') {
+          await loadLeads();
+          const lead = leads.list.find((x) => x.id === pl.leadId);
+          if (!lead) return { success: false, error: 'No existe ese prospecto.' };
+          const tone = ['breve', 'cordial', 'formal'].indexOf(pl.tone) >= 0 ? pl.tone : 'cordial';
+          return { success: true, message: followUpDraft(lead, tone, pl.channel === 'email' ? 'email' : 'whatsapp') };
         }
         if (t === 'GET_STATS') {
           await loadLeads();
@@ -672,9 +800,9 @@ export default function mount(shell) {
       h('span', null, label));
   }
 
-  function Preview({ profile, qrUrl, device, leads: leadsOn }) {
+  function Preview({ profile, qrUrl, device, leads: leadsOn, member }) {
     const ref = useRef(null);
-    const key = useMemo(() => JSON.stringify(profile) + '|' + qrUrl + '|' + leadsOn, [profile, qrUrl, leadsOn]);
+    const key = useMemo(() => JSON.stringify(profile) + '|' + qrUrl + '|' + leadsOn + '|' + (member || ''), [profile, qrUrl, leadsOn, member]);
     useEffect(() => {
       if (!ref.current) return undefined;
       let inst = null;
@@ -685,6 +813,7 @@ export default function mount(shell) {
           // marcado «vista previa») y el prospecto aparece al instante.
           leadEndpoint: leadsOn && profile.leadForm === 'on' ? gatewayUrl('lead') : '',
           onLead: () => { void loadLeads(); shell.notify({ level: 'success', text: 'Prospecto registrado en la pestaña Prospectos.' }); },
+          member: member ? { key: member } : null,
         });
       }, 180);
       return () => { clearTimeout(t); if (inst) inst.destroy(); };
@@ -755,7 +884,8 @@ export default function mount(shell) {
         h('code', { className: 'kvcx-url' }, gatewayUrl('')),
         h('small', { className: 'kvcx-help' }, 'Si tu tarjeta vive en otro sitio (GitHub Pages, figit.ai), este enlace conecta su formulario y su medición con esta app.')) : null,
       m.published ? h('p', { className: 'kvcx-help' }, 'El HTML exportado lleva el formulario y la medición conectados a esta app: aunque lo subas a tu dominio o a GitHub Pages, cada prospecto y cada visita llegan aquí.') : null,
-      h(ShareImage, { m }));
+      h(ShareImage, { m }),
+      h(WalletBox, { m }));
   }
 
   function BrandPicker({ p }) {
@@ -813,11 +943,75 @@ export default function mount(shell) {
           h('strong', null, busy === o.label ? 'Aplicando…' : o.label), h('small', null, o.sub)))));
   }
 
+  function memberName(key) {
+    if (!key) return model.profile.name;
+    const x = model.team.find((t) => t.key === key);
+    return x ? x.profile.name || key : key;
+  }
+  function MemberFilter({ value, onChange }) {
+    if (!model.team.length) return null;
+    return h('select', { className: 'kvcx-input kvcx-select', value, onChange: (e) => onChange(e.target.value), 'aria-label': 'Persona' },
+      h('option', { value: '*' }, 'Todo el equipo'),
+      h('option', { value: '' }, model.profile.name + ' (principal)'),
+      model.team.map((x) => h('option', { key: x.key, value: x.key }, x.profile.name || x.key)));
+  }
+
+  function FollowUp({ lead, m, onDone }) {
+    const d = lead.data || {};
+    const [tone, setTone] = useState('cordial');
+    const [channel, setChannel] = useState(d.phone ? 'whatsapp' : 'email');
+    const [text, setText] = useState(() => followUpDraft(lead, 'cordial', d.phone ? 'whatsapp' : 'email'));
+    const [agents, setAgents] = useState([]);
+    const [agentId, setAgentId] = useState('');
+    const [busy, setBusy] = useState(false);
+    const [note, setNote] = useState('');
+    useEffect(() => { if (shell.agents) loadAgents().then((a) => { setAgents(a); if (a[0]) setAgentId(a[0].id); }); }, []);
+    const regen = (t, c) => { setText(followUpDraft(lead, t, c)); setNote(''); };
+    const ask = async () => {
+      setBusy(true); setNote('');
+      try {
+        const out = await agentDraft(agentId, lead, tone, channel);
+        if (out) { setText(out); setNote('Redactado por el agente. Revísalo antes de enviar.'); }
+      } catch (e) {
+        setNote(String((e && e.message) || e) + ' · Se mantiene el borrador de la app.');
+      }
+      setBusy(false);
+    };
+    const wa = String(d.phone || '').replace(/\D/g, '');
+    const send = () => {
+      if (lead.status === 'new' || !lead.status) void setLeadStatus(lead, { status: 'contacted', contactedAt: new Date().toISOString() });
+      onDone && onDone();
+    };
+    return h('div', { className: 'kvcx-fu' },
+      h('div', { className: 'kvcx-row kvcx-wrap' },
+        h('div', { className: 'kvcx-seg' }, [['breve', 'Breve'], ['cordial', 'Cordial'], ['formal', 'Formal']].map(([k, t]) =>
+          h('button', { key: k, type: 'button', className: tone === k ? 'kvcx-on' : '', onClick: () => { setTone(k); regen(k, channel); } }, t))),
+        h('div', { className: 'kvcx-seg' },
+          wa ? h('button', { type: 'button', className: channel === 'whatsapp' ? 'kvcx-on' : '', onClick: () => { setChannel('whatsapp'); regen(tone, 'whatsapp'); } }, 'WhatsApp') : null,
+          d.email ? h('button', { type: 'button', className: channel === 'email' ? 'kvcx-on' : '', onClick: () => { setChannel('email'); regen(tone, 'email'); } }, 'Correo') : null)),
+      h('textarea', { className: 'kvcx-input', rows: channel === 'email' ? 8 : 5, value: text, onChange: (e) => setText(e.target.value), 'aria-label': 'Mensaje de seguimiento' }),
+      note ? h('p', { className: 'kvcx-help' }, note) : null,
+      h('div', { className: 'kvcx-row kvcx-wrap' },
+        channel === 'whatsapp' && wa
+          ? h('a', { className: 'kvcx-btn kvcx-btn-primary', href: 'https://wa.me/' + wa + '?text=' + encodeURIComponent(text), target: '_blank', rel: 'noopener noreferrer', onClick: send }, 'Enviar por WhatsApp')
+          : d.email ? h('a', { className: 'kvcx-btn kvcx-btn-primary', href: 'mailto:' + d.email + '?subject=' + encodeURIComponent((d.lang === 'en' ? 'Following up · ' : 'Seguimiento · ') + m.profile.company) + '&body=' + encodeURIComponent(text), onClick: send }, 'Abrir en el correo') : null,
+        h('button', { type: 'button', className: 'kvcx-btn kvcx-btn-ghost', onClick: () => { if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => shell.notify({ level: 'success', text: 'Mensaje copiado' })); } }, 'Copiar'),
+        shell.agents && agents.length ? h('span', { className: 'kvcx-row' },
+          h('select', { className: 'kvcx-input kvcx-select', value: agentId, onChange: (e) => setAgentId(e.target.value), 'aria-label': 'Agente' },
+            agents.map((ag) => h('option', { key: ag.id, value: ag.id }, ag.displayName || ag.name || ag.id))),
+          h('button', { type: 'button', className: 'kvcx-btn', disabled: busy, onClick: ask }, busy ? 'Redactando…' : 'Pedir al agente')) : null),
+      !shell.agents ? h('p', { className: 'kvcx-help' }, 'Borrador escrito por la app con los datos del prospecto. Con KIMOS 0.96 o superior, el agente de KIMOS también puede redactarlo.') : null);
+  }
+
   function LeadsPane({ l, m }) {
     useEffect(() => { void loadLeads(); }, []);
     const [filter, setFilter] = useState('open');
+    const [who, setWho] = useState('*');
+    const [open, setOpen] = useState('');
     if (!instanceId) return h('p', { className: 'kvcx-warn' }, 'Abre la app como documento para recibir prospectos.');
-    const list = (l.list || []).filter((x) => (filter === 'open' ? (x.status || 'new') !== 'archived' : (x.status || 'new') === 'archived'));
+    const list = (l.list || [])
+      .filter((x) => (filter === 'open' ? (x.status || 'new') !== 'archived' : (x.status || 'new') === 'archived'))
+      .filter((x) => who === '*' || String((x.data || {}).for || '') === who);
     const fmt = (iso) => { try { return new Date(iso).toLocaleString('es-CL', { dateStyle: 'medium', timeStyle: 'short' }); } catch (e) { return iso || ''; } };
     return h('div', { className: 'kvcx-pane' },
       m.profile.leadForm !== 'on' ? h('p', { className: 'kvcx-warn' }, 'El formulario está apagado (pestaña Canales): nadie puede dejarte sus datos.') : null,
@@ -826,6 +1020,7 @@ export default function mount(shell) {
         h('div', { className: 'kvcx-seg' },
           h('button', { type: 'button', className: filter === 'open' ? 'kvcx-on' : '', onClick: () => setFilter('open') }, 'Activos'),
           h('button', { type: 'button', className: filter === 'archived' ? 'kvcx-on' : '', onClick: () => setFilter('archived') }, 'Archivados')),
+        h(MemberFilter, { value: who, onChange: setWho }),
         h('button', { type: 'button', className: 'kvcx-btn kvcx-btn-ghost', onClick: loadLeads }, 'Actualizar')),
       l.error ? h('p', { className: 'kvcx-warn' }, l.error) : null,
       !l.loaded ? h('p', { className: 'kvcx-help' }, 'Cargando prospectos…') :
@@ -835,7 +1030,6 @@ export default function mount(shell) {
       h('div', { className: 'kvcx-leads' }, list.map((x) => {
         const d = x.data || {};
         const st = x.status || 'new';
-        const wa = String(d.phone || '').replace(/\D/g, '');
         return h('article', { key: x.id, className: 'kvcx-lead kvcx-lead-' + st },
           h('div', { className: 'kvcx-lead-h' },
             h('strong', null, d.name || '(sin nombre)'),
@@ -844,16 +1038,120 @@ export default function mount(shell) {
           h('div', { className: 'kvcx-lead-meta' },
             d.email ? h('span', null, d.email) : null,
             d.phone ? h('span', null, d.phone) : null,
-            h('span', null, fmt(x.createdAt)), d.lang === 'en' ? h('span', null, 'EN') : null),
+            h('span', null, fmt(x.createdAt)), d.lang === 'en' ? h('span', null, 'EN') : null,
+            model.team.length || d.for ? h('span', { className: 'kvcx-chip' }, 'Para: ' + memberName(d.for || '')) : null,
+            d.source && d.source !== 'tarjeta KIMOS' ? h('span', { className: 'kvcx-chip' }, d.source) : null),
           d.message ? h('p', { className: 'kvcx-lead-msg' }, d.message) : null,
           h('div', { className: 'kvcx-row kvcx-wrap' },
-            wa ? h('a', { className: 'kvcx-btn kvcx-btn-primary', href: 'https://wa.me/' + wa + '?text=' + encodeURIComponent('Hola ' + String(d.name || '').split(' ')[0] + ', soy ' + m.profile.name + ' de ' + m.profile.company + '. Gracias por dejarme tus datos.'), target: '_blank', rel: 'noopener noreferrer', onClick: () => st === 'new' && setLeadStatus(x, { status: 'contacted' }) }, 'WhatsApp') : null,
-            d.email ? h('a', { className: 'kvcx-btn', href: 'mailto:' + d.email + '?subject=' + encodeURIComponent(m.profile.company + ' · ' + m.profile.name), onClick: () => st === 'new' && setLeadStatus(x, { status: 'contacted' }) }, 'Correo') : null,
+            h('button', { type: 'button', className: 'kvcx-btn kvcx-btn-primary', onClick: () => setOpen(open === x.id ? '' : x.id) }, open === x.id ? 'Cerrar' : 'Redactar seguimiento'),
             st !== 'converted' ? h('button', { type: 'button', className: 'kvcx-btn', onClick: () => convertLead(x) }, 'Pasar a Clientes') : null,
             st !== 'archived'
               ? h('button', { type: 'button', className: 'kvcx-btn kvcx-btn-ghost', onClick: () => setLeadStatus(x, { status: 'archived' }) }, 'Archivar')
-              : h('button', { type: 'button', className: 'kvcx-btn kvcx-btn-ghost', onClick: () => setLeadStatus(x, { status: 'new' }) }, 'Restaurar')));
+              : h('button', { type: 'button', className: 'kvcx-btn kvcx-btn-ghost', onClick: () => setLeadStatus(x, { status: 'new' }) }, 'Restaurar')),
+          open === x.id ? h(FollowUp, { lead: x, m, onDone: () => setOpen('') }) : null);
       })));
+  }
+
+  function TeamPane({ m, dir }) {
+    useEffect(() => { if (!dir.loaded) void loadDirectory(); }, []);
+    const [q, setQ] = useState('');
+    const [edit, setEdit] = useState('');
+    const team = m.team;
+    const inTeam = (key) => team.find((x) => x.key === key);
+    const addAll = () => {
+      const t = team.slice();
+      dir.list.forEach((a) => {
+        const key = keyFor(a);
+        if (!t.find((x) => x.key === key) && String(a.email || '').toLowerCase() !== String(m.profile.email || '').toLowerCase()) t.push({ key, on: true, profile: personalFromActor(a) });
+      });
+      setTeam(t);
+      shell.notify({ level: 'success', text: 'Tarjetas creadas para el equipo. Publica para activarlas.' });
+    };
+    const toggle = (a) => {
+      const key = keyFor(a);
+      const cur = inTeam(key);
+      if (cur) upsertMember(key, {}, !cur.on); else upsertMember(key, personalFromActor(a), true);
+    };
+    const copy = (u) => { if (navigator.clipboard) navigator.clipboard.writeText(u).then(() => shell.notify({ level: 'success', text: 'Enlace copiado' })); };
+    const png = (mem) => {
+      const u = memberUrl(mem.key);
+      if (!u) { shell.notify({ level: 'warn', text: 'Abre la app como documento para tener enlaces.' }); return; }
+      const p = memberProfile(mem);
+      KVC.qrPng(u, { dark: p.theme.ink, px: 1400 }).then((b) => KVC.download('QR_' + KVC.slug(p.name) + '.png', b));
+    };
+    const manual = team.filter((x) => !dir.list.some((a) => keyFor(a) === x.key));
+    const rows = dir.list.filter((a) => !q || (String(a.displayName || '') + ' ' + String(a.email || '')).toLowerCase().indexOf(q.toLowerCase()) >= 0);
+    const memberRow = (key, label, sub, photo, actor) => {
+      const mem = inTeam(key);
+      const on = !!(mem && mem.on);
+      return h('article', { key, className: 'kvcx-member' + (on ? ' kvcx-member-on' : '') },
+        h('div', { className: 'kvcx-member-h' },
+          photo ? h('img', { src: photo, alt: '', className: 'kvcx-member-ph' }) : h('span', { className: 'kvcx-member-ph kvcx-member-ini' }, (label || '?').slice(0, 1)),
+          h('div', { className: 'kvcx-member-t' }, h('strong', null, label), h('small', null, sub)),
+          actor && String(actor.email || '').toLowerCase() === String(m.profile.email || '').toLowerCase()
+            ? h('span', { className: 'kvcx-chip' }, 'Tarjeta principal')
+            : h('label', { className: 'kvcx-switch' },
+              h('input', { type: 'checkbox', checked: on, onChange: () => (actor ? toggle(actor) : upsertMember(key, {}, !on)) }),
+              h('span', null, on ? 'Con tarjeta' : 'Sin tarjeta'))),
+        on ? h('div', { className: 'kvcx-row kvcx-wrap' },
+          h('button', { type: 'button', className: 'kvcx-btn', onClick: () => setUi({ previewMember: ui.previewMember === key ? '' : key }) }, ui.previewMember === key ? 'Ver la principal' : 'Vista previa'),
+          h('button', { type: 'button', className: 'kvcx-btn', onClick: () => setEdit(edit === key ? '' : key) }, edit === key ? 'Listo' : 'Editar datos'),
+          memberUrl(key) ? h('button', { type: 'button', className: 'kvcx-btn kvcx-btn-ghost', onClick: () => copy(memberUrl(key)) }, 'Copiar enlace') : null,
+          memberUrl(key) ? h('a', { className: 'kvcx-btn kvcx-btn-ghost', href: memberUrl(key), target: '_blank', rel: 'noopener noreferrer' }, 'Abrir') : null,
+          h('button', { type: 'button', className: 'kvcx-btn kvcx-btn-ghost', onClick: () => png(mem) }, 'QR (PNG)')) : null,
+        on && edit === key ? h('div', { className: 'kvcx-grid' },
+          [['name', 'Nombre'], ['title', 'Cargo'], ['titleEn', 'Cargo (inglés)'], ['phone', 'Teléfono'], ['whatsapp', 'WhatsApp (dígitos)'], ['email', 'Correo'], ['linkedin', 'LinkedIn']].map(([k, lab]) =>
+            h('label', { key: k, className: 'kvcx-field' }, h('span', { className: 'kvcx-label' }, lab),
+              h('input', { className: 'kvcx-input', value: (mem.profile[k] || ''), onChange: (e) => upsertMember(key, { [k]: e.target.value }) })))) : null);
+    };
+    return h('div', { className: 'kvcx-pane' },
+      h('div', { className: 'kvcx-preset' },
+        h('div', null,
+          h('strong', null, 'Tarjetas del equipo'),
+          h('small', null, 'Cada persona recibe su propia tarjeta con su foto, cargo y contacto, y la marca de esta tarjeta. Los prospectos que deje cada una llegan aquí, marcados con su nombre.'))),
+      !m.published ? h('p', { className: 'kvcx-warn' }, 'Publica la tarjeta principal para que los enlaces del equipo funcionen.') : null,
+      h('div', { className: 'kvcx-row kvcx-wrap' },
+        h('input', { className: 'kvcx-input kvcx-search', placeholder: 'Buscar persona…', value: q, onChange: (e) => setQ(e.target.value), 'aria-label': 'Buscar persona' }),
+        h('button', { type: 'button', className: 'kvcx-btn kvcx-btn-primary', disabled: !dir.list.length, onClick: addAll }, 'Crear tarjetas para todos'),
+        h('button', { type: 'button', className: 'kvcx-btn kvcx-btn-ghost', onClick: loadDirectory }, dir.loading ? 'Cargando…' : 'Recargar directorio')),
+      dir.error ? h('p', { className: 'kvcx-warn' }, dir.error) : null,
+      h('p', { className: 'kvcx-help' }, team.filter((x) => x.on).length + ' tarjetas activas · ' + dir.list.length + ' personas en el directorio de KIMOS'),
+      h('div', { className: 'kvcx-members' },
+        rows.map((a) => memberRow(keyFor(a), a.displayName || a.email, [a.description, a.email].filter(Boolean).join(' · '), a.photoUrl, a)),
+        manual.map((x) => memberRow(x.key, x.profile.name || x.key, [x.profile.title, x.profile.email].filter(Boolean).join(' · ') + ' · fuera del directorio', x.profile.photo, null))),
+      h(AddManual, null));
+  }
+  function AddManual() {
+    const [name, setName] = useState('');
+    const add = () => {
+      const n = name.trim(); if (!n) return;
+      const key = n.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 50) || ('p' + Date.now());
+      upsertMember(key, { name: n, firstName: n.split(' ')[0], lastName: n.split(' ').slice(1).join(' ') }, true);
+      setName('');
+    };
+    return h('div', { className: 'kvcx-row kvcx-wrap' },
+      h('input', { className: 'kvcx-input kvcx-search', placeholder: 'Agregar a alguien fuera del directorio (nombre)', value: name, onChange: (e) => setName(e.target.value), onKeyDown: (e) => { if (e.key === 'Enter') add(); } }),
+      h('button', { type: 'button', className: 'kvcx-btn', onClick: add }, 'Agregar'));
+  }
+
+  function WalletBox({ m }) {
+    const p = m.profile;
+    const card = qrTarget();
+    const dl = (name, obj) => KVC.download(name, new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' }));
+    return h('div', { className: 'kvcx-share' },
+      h('div', null,
+        h('strong', null, 'Apple Wallet y Google Wallet'),
+        h('small', null, 'Un pase que guarda SOLO tu tarjeta de contacto en la billetera del teléfono: nombre, cargo, empresa, contacto y el QR de tu tarjeta. No tiene relación con tarjetas ni métodos de pago.')),
+      h('ol', { className: 'kvcx-steps' },
+        h('li', null, 'Descarga el contenido del pase (abajo) o usa la herramienta del repositorio: ', h('code', null, 'node tools/wallet.mjs')),
+        h('li', null, 'Fírmalo con tu certificado de Apple (Pass Type ID) y tu cuenta de emisor de Google Wallet. Las llaves nunca pasan por la app.'),
+        h('li', null, 'Pega aquí los dos enlaces: aparecerán los botones «Agregar a Apple Wallet» y «Guardar en Google Wallet» en tu tarjeta.')),
+      h('div', { className: 'kvcx-grid' },
+        h(Field, { label: 'Enlace del pase de Apple (.pkpass)', k: 'walletApple', profile: p, placeholder: 'https://…/bryan.pkpass', wide: true }),
+        h(Field, { label: 'Enlace «Guardar en Google Wallet»', k: 'walletGoogle', profile: p, placeholder: 'https://pay.google.com/gp/v/save/…', wide: true })),
+      h('div', { className: 'kvcx-row kvcx-wrap' },
+        h('button', { type: 'button', className: 'kvcx-btn', onClick: () => dl('pass.json', KVC.walletApplePass(p, { cardUrl: card })) }, 'Contenido del pase Apple (pass.json)'),
+        h('button', { type: 'button', className: 'kvcx-btn', onClick: () => dl('google-wallet.json', KVC.walletGoogleObject(p, { cardUrl: card })) }, 'Objeto Google Wallet (JSON)')));
   }
 
   function ShareImage({ m }) {
@@ -882,8 +1180,9 @@ export default function mount(shell) {
 
   function StatsPane({ l, m }) {
     const [days, setDays] = useState(30);
+    const [who, setWho] = useState('*');
     useEffect(() => { void loadLeads(); }, []);
-    const st = summarize(l.visits, l.list, days);
+    const st = summarize(l.visits, l.list, days, undefined, who);
     const pct = (a, b) => (b ? Math.round((a / b) * 100) : 0);
     const maxC = Math.max(1, ...CHANNELS.map(([k]) => st.clicks[k]));
     const maxD = Math.max(1, ...st.daily.map((d) => d.opens));
@@ -896,6 +1195,7 @@ export default function mount(shell) {
       h('div', { className: 'kvcx-row kvcx-wrap' },
         h('div', { className: 'kvcx-seg' }, [[7, '7 días'], [30, '30 días'], [90, '90 días'], [0, 'Todo']].map(([d, t]) =>
           h('button', { key: t, type: 'button', className: days === d ? 'kvcx-on' : '', onClick: () => setDays(d) }, t))),
+        h(MemberFilter, { value: who, onChange: setWho }),
         h('button', { type: 'button', className: 'kvcx-btn kvcx-btn-ghost', onClick: loadLeads }, 'Actualizar')),
       h('div', { className: 'kvcx-kpis' },
         kpi('Aperturas', st.opens, st.mobile ? pct(st.mobile, st.opens) + '% desde el teléfono' : null),
@@ -936,7 +1236,7 @@ export default function mount(shell) {
   }
 
   function Component() {
-    const [st, setSt] = useState({ model, ui, leads });
+    const [st, setSt] = useState({ model, ui, leads, directory });
     useEffect(() => { listeners.add(setSt); return () => listeners.delete(setSt); }, []);
     const m = st.model, u = st.ui, p = m.profile;
     if (!KVC || !p) {
@@ -1005,6 +1305,7 @@ export default function mount(shell) {
       publicar: h(PublishPane, { m }),
       prospectos: h(LeadsPane, { l: st.leads, m }),
       medicion: h(StatsPane, { l: st.leads, m }),
+      equipo: h(TeamPane, { m, dir: st.directory }),
     }[u.tab];
 
     return h('div', { className: 'kimos-vcard' },
@@ -1026,7 +1327,16 @@ export default function mount(shell) {
         h('section', { className: 'kvcx-editor' }, m.loaded ? pane : h('p', { className: 'kvcx-help' }, 'Cargando…')),
         h('section', { className: 'kvcx-preview' },
           h('div', { className: 'kvcx-preview-k' }, 'Así la verá quien escanee tu QR'),
-          m.loaded ? h(Preview, { profile: p, qrUrl: qrTarget(), device: u.device, leads: m.published }) : null)));
+          u.previewMember && m.team.find((x) => x.key === u.previewMember)
+            ? h('div', { className: 'kvcx-preview-who' }, 'Tarjeta de ' + memberName(u.previewMember) + ' · ',
+              h('button', { type: 'button', onClick: () => setUi({ previewMember: '' }) }, 'volver a la principal'))
+            : null,
+          m.loaded ? (() => {
+            const mem = u.previewMember ? m.team.find((x) => x.key === u.previewMember) : null;
+            return mem
+              ? h(Preview, { profile: memberProfile(mem), qrUrl: memberUrl(mem.key) || qrTarget(), device: u.device, leads: m.published, member: mem.key })
+              : h(Preview, { profile: p, qrUrl: qrTarget(), device: u.device, leads: m.published });
+          })() : null)));
   }
 
   return {

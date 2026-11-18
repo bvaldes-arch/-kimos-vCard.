@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="generator" content="KIMOS vCard 1.3.0">
+<meta name="generator" content="KIMOS vCard 2.0.0">
 <link rel="icon" href="logo-mark.png">
 <style>
   html, body { margin: 0; padding: 0; background: #F8FAFC; min-height: 100%; }
@@ -41,20 +41,31 @@
     .then(function (j) {
       var prof = j && j.data && j.data.profile;
       if (!prof || !prof.name) throw new Error('Esta tarjeta no está publicada.');
+      // Equipo (v2.0): ?m=clave abre la tarjeta de esa persona con la marca compartida.
+      var mKey = new URLSearchParams(location.search).get('m') || '';
+      var member = null;
+      if (mKey) {
+        var entry = (j.data.team || []).filter(function (t) { return t && t.key === mKey; })[0];
+        if (!entry) throw new Error('Esta tarjeta del equipo ya no está publicada.');
+        prof = KVC.teamMerge(prof, entry.profile);
+        member = { key: mKey };
+      }
       document.title = prof.name + (prof.title ? ' · ' + prof.title : '') + (prof.company ? ' · ' + prof.company : '');
       KVC.injectCss();
       // El QR de la página apunta SIEMPRE a una URL real y abrible: el dominio
       // propio si la tarjeta declara uno, si no esta misma página.
       var qLang = new URLSearchParams(location.search).get('lang');
       KVC.mount(root, prof, {
-        qrUrl: prof.publicUrl || here.replace(/([?&])lang=[^&]*&?/, '$1').replace(/[?&]$/, ''),
+        // El QR de una tarjeta del equipo apunta a ESA tarjeta, no a la principal.
+        qrUrl: (member ? '' : prof.publicUrl) || here.replace(/([?&])lang=[^&]*&?/, '$1').replace(/[?&]$/, ''),
         resolve: function (n) { return assetBase + n; },
         lang: qLang === 'en' || qLang === 'es' ? qLang : undefined,
         // «Déjame tus datos» llega a la app como prospecto (gateway public.submit).
         leadEndpoint: j.data.leads === true ? api + '/api/public/app/' + encodeURIComponent(id) + '/submit/lead' : '',
         // Medición (v1.3): una visita por apertura, con los canales tocados.
         statsEndpoint: j.data.stats === true ? api + '/api/public/app/' + encodeURIComponent(id) + '/submit/visita' : '',
-        source: 'tarjeta KIMOS'
+        source: 'tarjeta KIMOS',
+        member: member
       });
       // Atajo en la pantalla de inicio: ícono con la foto y nombre corto.
       var icon = prof.photo ? (prof.photo.indexOf('asset:') === 0 ? assetBase + prof.photo.slice(6) : prof.photo) : '';

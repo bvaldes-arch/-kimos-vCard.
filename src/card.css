@@ -427,3 +427,13 @@
 .kvc .kvc-home { display: grid; gap: 10px; margin-bottom: 14px; }
 .kvc .kvc-home-step { display: grid; gap: 2px; padding: 12px; border-radius: 12px; background: var(--kvc-tile); border: 1px solid var(--kvc-line); font-size: 13px; color: var(--kvc-text-2); }
 .kvc .kvc-home-step strong { color: var(--kvc-text); }
+/* ── v2.0: Wallet y NFC ── */
+.kvc .kvc-wallets { width: 100%; margin-top: 10px; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.kvc .kvc-wallet { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 9px 12px; border-radius: 12px; color: #FFFFFF; background: #0B0B0C; border: 1px solid #2A2A2E; }
+.kvc .kvc-wallet .kvc-i { font-size: 20px; }
+.kvc .kvc-wallet span { display: flex; flex-direction: column; text-align: left; line-height: 1.1; }
+.kvc .kvc-wallet small { font-size: 10px; opacity: .8; }
+.kvc .kvc-wallet strong { font-size: 14px; }
+.kvc .kvc-nfc { display: grid; gap: 6px; justify-items: center; margin-bottom: 14px; }
+.kvc .kvc-nfc-msg { font-size: 11.5px; color: var(--kvc-muted); text-align: center; }
+.kvc .kvc-nfc-msg:empty { display: none; }
